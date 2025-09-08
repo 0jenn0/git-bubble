@@ -1,4 +1,4 @@
-import { BubbleParams, BubbleStyle } from '../type/bubble';
+import { BubbleParams } from '../type/bubble';
 import { themes } from './theme';
 import { calculateTagWidth, calculateTagLayout } from './util';
 
@@ -114,7 +114,7 @@ export function generateBubbleSVG(params: BubbleParams): string {
 
   // 태그들 생성
   const generateTags = () => {
-    let startY = title ? 55 : 25;
+    const startY = title ? 55 : 25;
     let tagElements = '';
 
     rows.forEach((row, rowIndex) => {
