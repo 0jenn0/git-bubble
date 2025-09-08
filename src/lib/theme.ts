@@ -1,6 +1,16 @@
 import { Theme, ThemeColors } from '../type/bubble';
 
 export const themes: Record<Theme, ThemeColors> = {
+ light: {
+ primary: '#ffffff',
+ secondary: '#f5f5f5',
+ accent: '#e0e0e0'
+ },
+ dark: {
+ primary: '#2d3748',
+ secondary: '#1a202c',
+ accent: '#4a5568'
+ },
  gradient: {
  primary: '#ff9a9e',
  secondary: '#fecfef',

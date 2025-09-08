@@ -43,10 +43,12 @@ export function calculateTagWidth(text: string, fontSize: number): number {
    export function parseParams(searchParams: URLSearchParams) {
     const title = searchParams.get('title') || undefined;
     const tags = searchParams.get('tags') || '';
-    const theme = (searchParams.get('theme') as any) || 'gradient';
+    const theme = (searchParams.get('theme') as any) || 'light';
     const style = (searchParams.get('style') as any) || 'modern';
     const width = parseInt(searchParams.get('width') || '400');
     const fontSize = parseInt(searchParams.get('fontSize') || '12');
     const animation = (searchParams.get('animation') as any) || 'none';
-    return { title, tags, theme, style, width, fontSize, animation };
+    const profileUrl = searchParams.get('profileUrl') || undefined;
+    const isOwn = searchParams.get('isOwn') === 'true';
+    return { title, tags, theme, style, width, fontSize, animation, profileUrl, isOwn };
    }

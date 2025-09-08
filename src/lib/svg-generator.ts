@@ -6,11 +6,13 @@ export function generateBubbleSVG(params: BubbleParams): string {
   const {
     title,
     tags: tagsString,
-    theme = 'gradient',
+    theme = 'light',
     style = 'modern',
     width = 400,
     fontSize = 12,
-    animation = 'none'
+    animation = 'none',
+    profileUrl,
+    isOwn = false
   } = params;
 
   // 태그 파싱 및 디코딩
@@ -24,11 +26,19 @@ export function generateBubbleSVG(params: BubbleParams): string {
   }
 
   // 테마 색상 가져오기
-  const themeColors = themes[theme] || themes.gradient;
+  const themeColors = themes[theme] || themes.light;
+  
+  // 프로필 사진 크기 및 간격
+  const profileSize = 40;
+  const profilePadding = 12;
+  const bubbleMarginFromProfile = profileUrl ? profileSize + profilePadding : 20;
 
-  // 태그 레이아웃 계산
-  const maxTagWidth = width - 80; // 패딩 고려
-  const { rows, totalHeight } = calculateTagLayout(tags, maxTagWidth, fontSize);
+  // 태그 레이아웃 계산 (프로필 사진 고려)
+  const maxTagWidth = width - bubbleMarginFromProfile - 40;
+  const { rows, totalHeight: bubbleHeight } = calculateTagLayout(tags, maxTagWidth, fontSize);
+  
+  // 전체 높이는 프로필 사진과 말풍선 중 더 큰 값
+  const totalHeight = Math.max(bubbleHeight, profileUrl ? profileSize + 20 : bubbleHeight);
 
   // 애니메이션 정의
   const getAnimationCSS = () => {
@@ -56,133 +66,137 @@ export function generateBubbleSVG(params: BubbleParams): string {
     }
   };
 
-  // 스타일별 그라데이션 생성
-  const generateGradient = (id: string) => {
-    if (style === 'neon' || theme === 'neon') {
-      return `
-        <linearGradient id="${id}" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:${themeColors.secondary};stop-opacity:1" />
-          <stop offset="100%" style="stop-color:${themeColors.primary};stop-opacity:1" />
-        </linearGradient>`;
-    }
+  // 프로필 사진 생성
+  const generateProfilePicture = () => {
+    if (!profileUrl) return '';
+    
+    const x = isOwn ? width - profileSize - 10 : 10;
+    const y = (totalHeight - profileSize) / 2;
+    
     return `
-      <linearGradient id="${id}" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color:${themeColors.primary};stop-opacity:0.9" />
-        <stop offset="50%" style="stop-color:${themeColors.secondary};stop-opacity:0.9" />
-        <stop offset="100%" style="stop-color:${themeColors.accent || themeColors.primary};stop-opacity:0.9" />
-      </linearGradient>`;
+      <defs>
+        <clipPath id="profileClip">
+          <circle cx="${x + profileSize/2}" cy="${y + profileSize/2}" r="${profileSize/2}" />
+        </clipPath>
+      </defs>
+      <circle cx="${x + profileSize/2}" cy="${y + profileSize/2}" r="${profileSize/2}" 
+              fill="#e0e0e0" stroke="#ccc" stroke-width="1" />
+      <image href="${profileUrl}" x="${x}" y="${y}" width="${profileSize}" height="${profileSize}" 
+             clip-path="url(#profileClip)" preserveAspectRatio="xMidYMid slice" />`;
   };
 
-  // 말풍선 배경 생성
+  // 메신저 스타일 말풍선 배경 생성
   const generateBubbleBackground = () => {
-    const tailY = totalHeight / 2;
-    const cornerRadius = 30;
+    const bubbleX = isOwn ? 20 : bubbleMarginFromProfile;
+    const bubbleY = (totalHeight - bubbleHeight) / 2 + 10;
+    const bubbleWidth = width - bubbleX - 20;
+    const bubbleActualHeight = bubbleHeight - 20;
+    const radius = 20;
+    const tailSize = 8;
+    const tailY = bubbleY + bubbleActualHeight / 2;
     
-    // 말풍선 모양 (꼭지점 둥글게)
-    const tailRadius = 3;
-    const tailLength = 20; // 꼬리 길이를 더 길게
-    const bubblePath = `
-      M${cornerRadius + 30},10 
-      L${width - cornerRadius - 10},10 
-      C${width - 10},10 ${width - 10},10 ${width - 10},${cornerRadius + 10}
-      L${width - 10},${totalHeight - cornerRadius - 20}
-      C${width - 10},${totalHeight - 20} ${width - 10},${totalHeight - 20} ${width - cornerRadius - 10},${totalHeight - 20}
-      L${cornerRadius + 30},${totalHeight - 20}
-      C30,${totalHeight - 20} 30,${totalHeight - 20} 30,${totalHeight - cornerRadius - 20}
-      L30,${tailY + 12}
-      L${30 - tailLength + tailRadius},${tailY + tailRadius}
-      Q${30 - tailLength},${tailY} ${30 - tailLength + tailRadius},${tailY - tailRadius}
-      L30,${tailY - 12}
-      L30,${cornerRadius + 10}
-      C30,10 30,10 ${cornerRadius + 30},10
-      Z`;
-
-    if (style === 'glass') {
-      return `
-        <path d="${bubblePath}" 
-              fill="url(#bubbleGrad)" 
-              filter="url(#shadow)" class="bubble" />`;
+    // 메신저 스타일 말풍선 (왼쪽 또는 오른쪽)
+    let bubblePath;
+    
+    if (isOwn) {
+      // 내 메시지 (오른쪽, 꼬리 오른쪽)
+      bubblePath = `
+        M${bubbleX + radius},${bubbleY}
+        L${bubbleX + bubbleWidth - radius},${bubbleY}
+        Q${bubbleX + bubbleWidth},${bubbleY} ${bubbleX + bubbleWidth},${bubbleY + radius}
+        L${bubbleX + bubbleWidth},${tailY - tailSize}
+        L${bubbleX + bubbleWidth + tailSize},${tailY}
+        L${bubbleX + bubbleWidth},${tailY + tailSize}
+        L${bubbleX + bubbleWidth},${bubbleY + bubbleActualHeight - radius}
+        Q${bubbleX + bubbleWidth},${bubbleY + bubbleActualHeight} ${bubbleX + bubbleWidth - radius},${bubbleY + bubbleActualHeight}
+        L${bubbleX + radius},${bubbleY + bubbleActualHeight}
+        Q${bubbleX},${bubbleY + bubbleActualHeight} ${bubbleX},${bubbleY + bubbleActualHeight - radius}
+        L${bubbleX},${bubbleY + radius}
+        Q${bubbleX},${bubbleY} ${bubbleX + radius},${bubbleY}
+        Z`;
+    } else {
+      // 상대방 메시지 (왼쪽, 꼬리 왼쪽)
+      bubblePath = `
+        M${bubbleX + radius},${bubbleY}
+        L${bubbleX + bubbleWidth - radius},${bubbleY}
+        Q${bubbleX + bubbleWidth},${bubbleY} ${bubbleX + bubbleWidth},${bubbleY + radius}
+        L${bubbleX + bubbleWidth},${bubbleY + bubbleActualHeight - radius}
+        Q${bubbleX + bubbleWidth},${bubbleY + bubbleActualHeight} ${bubbleX + bubbleWidth - radius},${bubbleY + bubbleActualHeight}
+        L${bubbleX + radius},${bubbleY + bubbleActualHeight}
+        Q${bubbleX},${bubbleY + bubbleActualHeight} ${bubbleX},${bubbleY + bubbleActualHeight - radius}
+        L${bubbleX},${tailY + tailSize}
+        L${bubbleX - tailSize},${tailY}
+        L${bubbleX},${tailY - tailSize}
+        L${bubbleX},${bubbleY + radius}
+        Q${bubbleX},${bubbleY} ${bubbleX + radius},${bubbleY}
+        Z`;
     }
 
-    if (style === 'neon' || theme === 'neon') {
-      return `
-        <path d="${bubblePath}" 
-              fill="url(#bubbleGrad)" 
-              filter="url(#neonGlow)" class="bubble" />`;
-    }
-
+    const fillColor = theme === 'dark' || isOwn ? themeColors.primary : '#ffffff';
+    const strokeColor = theme === 'dark' ? 'none' : '#e0e0e0';
+    
     return `
       <path d="${bubblePath}" 
-            fill="url(#bubbleGrad)" filter="url(#shadow)" class="bubble" />`;
+            fill="${fillColor}" 
+            stroke="${strokeColor}" 
+            stroke-width="1" 
+            filter="url(#shadow)" />`;
   };
 
-  // 소제목 생성
+  // 소제목 생성 (메신저 스타일)
   const generateTitle = () => {
     if (!title) return '';
+    
+    const bubbleX = isOwn ? 20 : bubbleMarginFromProfile;
+    const textColor = theme === 'dark' || isOwn ? '#ffffff' : '#333333';
+    
     return `
-      <text x="45" y="35" fill="white" font-family="Arial, sans-serif" 
-            font-size="12" font-weight="bold" opacity="0.9">${decodeURIComponent(title)}</text>
-      <line x1="45" y1="42" x2="${width-45}" y2="42" stroke="rgba(255,255,255,0.2)" stroke-width="1" />`;
+      <text x="${bubbleX + 15}" y="${(totalHeight - bubbleHeight) / 2 + 30}" 
+            fill="${textColor}" font-family="-apple-system, BlinkMacSystemFont, sans-serif" 
+            font-size="11" font-weight="600" opacity="0.8">${decodeURIComponent(title)}</text>`;
   };
 
-  // 태그들 생성
+  // 태그들 생성 (메신저 스타일)
   const generateTags = () => {
-    const startY = title ? 55 : 35;
+    const bubbleX = isOwn ? 20 : bubbleMarginFromProfile;
+    const bubbleY = (totalHeight - bubbleHeight) / 2 + 10;
+    const startY = title ? bubbleY + 45 : bubbleY + 25;
+    const textColor = theme === 'dark' || isOwn ? '#ffffff' : '#333333';
+    
     let tagElements = '';
 
     rows.forEach((row, rowIndex) => {
-      let currentX = 45;
-      const currentY = startY + (rowIndex * 30);
+      let currentX = bubbleX + 15;
+      const currentY = startY + (rowIndex * 28);
 
       row.forEach(tag => {
         const tagWidth = calculateTagWidth(tag, fontSize);
         const textX = currentX + tagWidth / 2;
         const textY = currentY + 14;
 
-        // 스타일별 태그 배경
-        let tagFill = 'rgba(255,255,255,0.3)';
-        let tagStroke = 'rgba(255,255,255,0.1)';
+        // 메신저 스타일 태그 (더 모던하고 심플)
+        const tagBg = theme === 'dark' || isOwn ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.05)';
         
-        if (style === 'neon' || theme === 'neon') {
-          tagFill = 'rgba(0,212,255,0.2)';
-          tagStroke = themeColors.primary;
-        } else if (style === 'glass') {
-          tagFill = 'rgba(255,255,255,0.15)';
-          tagStroke = 'rgba(255,255,255,0.3)';
-        }
-
         tagElements += `
-          <rect x="${currentX}" y="${currentY}" width="${tagWidth}" height="20" rx="10" 
-                fill="${tagFill}" stroke="${tagStroke}" stroke-width="1" />
-          <text x="${textX}" y="${textY}" text-anchor="middle" fill="white" 
-                font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold">${tag}</text>`;
+          <rect x="${currentX}" y="${currentY}" width="${tagWidth}" height="22" rx="11" 
+                fill="${tagBg}" />
+          <text x="${textX}" y="${textY}" text-anchor="middle" fill="${textColor}" 
+                font-family="-apple-system, BlinkMacSystemFont, sans-serif" 
+                font-size="${fontSize}" font-weight="500">${tag}</text>`;
 
-        currentX += tagWidth + 8;
+        currentX += tagWidth + 6;
       });
     });
 
     return tagElements;
   };
 
-  // 필터 효과 생성
+  // 필터 효과 생성 (메신저 스타일)
   const generateFilters = () => {
-    let filters = `
+    return `
       <filter id="shadow">
-        <feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.3"/>
+        <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.1"/>
       </filter>`;
-
-    if (style === 'neon' || theme === 'neon') {
-      filters += `
-        <filter id="neonGlow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge> 
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>`;
-    }
-
-    return filters;
   };
 
   // 최종 SVG 생성
@@ -190,9 +204,10 @@ export function generateBubbleSVG(params: BubbleParams): string {
 <svg width="${width}" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="http://www.w3.org/2000/svg">
   ${getAnimationCSS()}
   <defs>
-    ${generateGradient('bubbleGrad')}
     ${generateFilters()}
   </defs>
+  
+  ${generateProfilePicture()}
   
   <g class="bubble-container">
     ${generateBubbleBackground()}

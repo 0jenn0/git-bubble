@@ -6,9 +6,11 @@ export interface BubbleParams {
  width?: number;
  fontSize?: number;
  animation?: Animation;
+ profileUrl?: string;
+ isOwn?: boolean;
 }
 
-export type Theme = 'gradient' | 'purple' | 'orange' | 'mint' | 'neon' | 'pastel';
+export type Theme = 'light' | 'dark' | 'gradient' | 'purple' | 'orange' | 'mint' | 'neon' | 'pastel';
 
 export type BubbleStyle = 'modern' | 'minimal' | 'glass' | 'retro' | 'neon';
 
