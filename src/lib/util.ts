@@ -32,10 +32,11 @@ export function calculateTagWidth(text: string, fontSize: number): number {
     if (currentRow.length > 0) {
     rows.push(currentRow);
     }
-    const titleHeight = 35; // 소제목이 있을 때
-    const tagRowHeight = 25;
-    const padding = 30;
-    const totalHeight = titleHeight + (rows.length * tagRowHeight) + padding;
+    const titleHeight = 35; // 소제목이 있을 때의 추가 높이
+    const tagRowHeight = 30; // 각 태그 행의 높이
+    const topPadding = 20;
+    const bottomPadding = 20;
+    const totalHeight = (rows.length * tagRowHeight) + topPadding + bottomPadding + titleHeight;
     return { rows, totalHeight };
    }
    // URL 파라미터 파싱 및 검증

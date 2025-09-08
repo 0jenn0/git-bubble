@@ -36,7 +36,7 @@ export function generateBubbleSVG(params: BubbleParams): string {
       case 'float':
         return `
           <style>
-            .bubble { animation: float 3s ease-in-out infinite; }
+            .bubble-container { animation: float 3s ease-in-out infinite; }
             @keyframes float {
               0%, 100% { transform: translateY(0px); }
               50% { transform: translateY(-8px); }
@@ -76,33 +76,46 @@ export function generateBubbleSVG(params: BubbleParams): string {
   // 말풍선 배경 생성
   const generateBubbleBackground = () => {
     const bubbleWidth = width - 40;
-    const bubbleHeight = totalHeight - 20;
+    const bubbleHeight = totalHeight - 40;
     const tailY = totalHeight / 2;
+    const cornerRadius = 40;
+    
+    // 말풍선 모양 (꼭지점 둥글게)
+    const tailRadius = 3;
+    const tailLength = 20; // 꼬리 길이를 더 길게
+    const bubblePath = `
+      M${cornerRadius + 30},10 
+      L${width - cornerRadius - 10},10 
+      C${width - 10},10 ${width - 10},10 ${width - 10},${cornerRadius + 10}
+      L${width - 10},${totalHeight - cornerRadius - 20}
+      C${width - 10},${totalHeight - 20} ${width - 10},${totalHeight - 20} ${width - cornerRadius - 10},${totalHeight - 20}
+      L${cornerRadius + 30},${totalHeight - 20}
+      C30,${totalHeight - 20} 30,${totalHeight - 20} 30,${totalHeight - cornerRadius - 20}
+      L30,${tailY + 12}
+      L${30 - tailLength + tailRadius},${tailY + tailRadius}
+      Q${30 - tailLength},${tailY} ${30 - tailLength + tailRadius},${tailY - tailRadius}
+      L30,${tailY - 12}
+      L30,${cornerRadius + 10}
+      C30,10 30,10 ${cornerRadius + 30},10
+      Z`;
 
     if (style === 'glass') {
       return `
-        <rect x="30" y="10" width="${bubbleWidth}" height="${bubbleHeight}" rx="20" 
-              fill="url(#bubbleGrad)" stroke="rgba(255,255,255,0.2)" stroke-width="1" 
-              filter="url(#shadow)" class="bubble" />
-        <path d="M 30 ${tailY-8} Q 15 ${tailY} 30 ${tailY+8}" 
-              fill="url(#bubbleGrad)" stroke="rgba(255,255,255,0.2)" stroke-width="1" />`;
+        <path d="${bubblePath}" 
+              fill="url(#bubbleGrad)" 
+              filter="url(#shadow)" class="bubble" />`;
     }
 
     if (style === 'neon' || theme === 'neon') {
       return `
-        <rect x="30" y="10" width="${bubbleWidth}" height="${bubbleHeight}" rx="20" 
-              fill="url(#bubbleGrad)" stroke="${themeColors.primary}" stroke-width="2" 
-              filter="url(#neonGlow)" class="bubble" />
-        <path d="M 30 ${tailY-8} Q 15 ${tailY} 30 ${tailY+8}" 
-              fill="url(#bubbleGrad)" stroke="${themeColors.primary}" stroke-width="2" 
-              filter="url(#neonGlow)" />`;
+        <path d="${bubblePath}" 
+              fill="url(#bubbleGrad)" 
+              filter="url(#neonGlow)" class="bubble" />`;
     }
 
     return `
-      <rect x="30" y="10" width="${bubbleWidth}" height="${bubbleHeight}" rx="20" 
-            fill="url(#bubbleGrad)" filter="url(#shadow)" class="bubble" />
-      <path d="M 30 ${tailY-8} Q 15 ${tailY} 30 ${tailY+8}" 
-            fill="url(#bubbleGrad)" filter="url(#shadow)" />`;
+      <path d="${bubblePath}" 
+            fill="url(#bubbleGrad)" filter="url(#shadow)" class="bubble" />`;
   };
 
   // 소제목 생성
@@ -116,7 +129,7 @@ export function generateBubbleSVG(params: BubbleParams): string {
 
   // 태그들 생성
   const generateTags = () => {
-    const startY = title ? 55 : 25;
+    const startY = title ? 55 : 35;
     let tagElements = '';
 
     rows.forEach((row, rowIndex) => {
