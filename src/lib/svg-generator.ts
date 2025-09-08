@@ -45,7 +45,7 @@ export function generateBubbleSVG(params: BubbleParams): string {
       case 'pulse':
         return `
           <style>
-            .bubble { animation: pulse 2s ease-in-out infinite; }
+            .bubble-container { animation: pulse 2s ease-in-out infinite; }
             @keyframes pulse {
               0%, 100% { transform: scale(1); }
               50% { transform: scale(1.05); }
@@ -75,10 +75,8 @@ export function generateBubbleSVG(params: BubbleParams): string {
 
   // 말풍선 배경 생성
   const generateBubbleBackground = () => {
-    const bubbleWidth = width - 40;
-    const bubbleHeight = totalHeight - 40;
     const tailY = totalHeight / 2;
-    const cornerRadius = 40;
+    const cornerRadius = 30;
     
     // 말풍선 모양 (꼭지점 둥글게)
     const tailRadius = 3;
@@ -196,8 +194,10 @@ export function generateBubbleSVG(params: BubbleParams): string {
     ${generateFilters()}
   </defs>
   
-  ${generateBubbleBackground()}
-  ${generateTitle()}
-  ${generateTags()}
+  <g class="bubble-container">
+    ${generateBubbleBackground()}
+    ${generateTitle()}
+    ${generateTags()}
+  </g>
 </svg>`.trim();
 }
