@@ -1,3 +1,6 @@
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // 텍스트 길이에 따른 태그 너비 계산
 export function calculateTagWidth(text: string, fontSize: number): number {
     // 한글은 영문보다 넓게 계산
