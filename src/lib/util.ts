@@ -50,5 +50,9 @@ export function calculateTagWidth(text: string, fontSize: number): number {
     const animation = (searchParams.get('animation') as any) || 'none';
     const profileUrl = searchParams.get('profileUrl') || undefined;
     const isOwn = searchParams.get('isOwn') === 'true';
+    
+    console.log('parseParams - profileUrl:', profileUrl);
+    console.log('parseParams - all params:', { title, tags, theme, style, width, fontSize, animation, profileUrl, isOwn });
+    
     return { title, tags, theme, style, width, fontSize, animation, profileUrl, isOwn };
    }

@@ -1,8 +1,34 @@
+import { hash } from 'crypto';
 import { BubbleParams } from '../type/bubble';
 import { themes } from './theme';
 import { calculateTagWidth, calculateTagLayout } from './util';
 
-export function generateBubbleSVG(params: BubbleParams): string {
+// 이미지를 base64로 변환하는 함수
+async function fetchImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; ImageProxy/1.0)',
+      },
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to fetch image:', response.status);
+      return null;
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    const base64 = buffer.toString('base64');
+    return `data:${contentType};base64,${base64}`;
+  } catch (error) {
+    console.error('Error fetching image:', error);
+    return null;
+  }
+}
+
+export async function generateBubbleSVG(params: BubbleParams): Promise<string> {
   const {
     title,
     tags: tagsString,
@@ -14,6 +40,7 @@ export function generateBubbleSVG(params: BubbleParams): string {
     profileUrl,
     isOwn = false
   } = params;
+
 
   // 태그 파싱 및 디코딩
   const tags = decodeURIComponent(tagsString)
@@ -67,22 +94,57 @@ export function generateBubbleSVG(params: BubbleParams): string {
   };
 
   // 프로필 사진 생성
-  const generateProfilePicture = () => {
+  const generateProfilePicture = async () => {
     if (!profileUrl) return '';
     
     const x = isOwn ? width - profileSize - 10 : 10;
     const y = (totalHeight - profileSize) / 2;
+    const centerX = x + profileSize/2;
+    const centerY = y + profileSize/2;
+    
+    // 이미지 URL인지 확인
+    if (profileUrl.startsWith('http')) {
+      // 실제 이미지를 base64로 변환하여 직접 삽입
+      const base64Image = await fetchImageAsBase64(profileUrl);
+      
+      if (base64Image) {
+        return `
+          <defs>
+            <clipPath id="profileClip">
+              <circle cx="${centerX}" cy="${centerY}" r="${profileSize/2}" />
+            </clipPath>
+          </defs>
+          <image x="${x}" y="${y}" width="${profileSize}" height="${profileSize}" 
+                 href="${base64Image}" clip-path="url(#profileClip)" 
+                 preserveAspectRatio="xMidYMid slice" />`;
+      }
+    }
+    
+    // 이미지 로드 실패 시 또는 텍스트인 경우 이니셜 아바타
+    const hash = profileUrl.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    
+    const colors = [
+      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', 
+      '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+    ];
+    const bgColor = colors[Math.abs(hash) % colors.length];
+    
+    let initial = 'A';
+    if (profileUrl.includes('@')) {
+      initial = profileUrl.split('@')[0].charAt(0).toUpperCase();
+    } else {
+      initial = profileUrl.charAt(0).toUpperCase();
+    }
     
     return `
-      <defs>
-        <clipPath id="profileClip">
-          <circle cx="${x + profileSize/2}" cy="${y + profileSize/2}" r="${profileSize/2}" />
-        </clipPath>
-      </defs>
-      <circle cx="${x + profileSize/2}" cy="${y + profileSize/2}" r="${profileSize/2}" 
-              fill="#e0e0e0" stroke="#ccc" stroke-width="1" />
-      <image href="${profileUrl}" x="${x}" y="${y}" width="${profileSize}" height="${profileSize}" 
-             clip-path="url(#profileClip)" preserveAspectRatio="xMidYMid slice" />`;
+      <circle cx="${centerX}" cy="${centerY}" r="${profileSize/2}" 
+              fill="${bgColor}" stroke="#ffffff" stroke-width="2" />
+      <text x="${centerX}" y="${centerY + 6}" text-anchor="middle" 
+            fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" 
+            font-size="${Math.floor(profileSize/2.2)}" font-weight="600">${initial}</text>`;
   };
 
   // 메신저 스타일 말풍선 배경 생성
@@ -200,6 +262,8 @@ export function generateBubbleSVG(params: BubbleParams): string {
   };
 
   // 최종 SVG 생성
+  const profilePicture = await generateProfilePicture();
+  
   return `
 <svg width="${width}" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="http://www.w3.org/2000/svg">
   ${getAnimationCSS()}
@@ -207,7 +271,7 @@ export function generateBubbleSVG(params: BubbleParams): string {
     ${generateFilters()}
   </defs>
   
-  ${generateProfilePicture()}
+  ${profilePicture}
   
   <g class="bubble-container">
     ${generateBubbleBackground()}

@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
  { status: 400 }
  );
  }
- // SVG 생성
- const svg = generateBubbleSVG(params);
+ // SVG 생성 (async)
+ const svg = await generateBubbleSVG(params);
  // 응답 헤더 설정
  return new NextResponse(svg, {
  headers: {

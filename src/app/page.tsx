@@ -16,6 +16,7 @@ export default function Home() {
   alt="Example Bubble 1"
   className="rounded-lg shadow-2xl"
   />
+  <img src="/api/bubble?tags=집에서,넷플릭스,보고,있어&theme=dark&profileUrl=https://i.pinimg.com/736x/5c/05/a1/5c05a1c87bf9a232c51077d58bb8afec.jpg&isOwn=false" alt="Messenger Style" className="rounded-lg shadow-2xl" />
   <img 
   src="/api/bubble?title=Tech Stack&tags=TypeScript,Next.js,Prisma&theme=purple&style=glass"
   alt="Example Bubble 2"
