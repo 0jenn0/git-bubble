@@ -43,6 +43,7 @@ export function calculateTagWidth(text: string, fontSize: number): number {
    export function parseParams(searchParams: URLSearchParams) {
     const title = searchParams.get('title') || undefined;
     const tags = searchParams.get('tags') || '';
+    const url = searchParams.get('url') || '';
     const theme = (searchParams.get('theme') as any) || 'light';
     const style = (searchParams.get('style') as any) || 'modern';
     const width = parseInt(searchParams.get('width') || '400');
@@ -50,9 +51,11 @@ export function calculateTagWidth(text: string, fontSize: number): number {
     const animation = (searchParams.get('animation') as any) || 'none';
     const profileUrl = searchParams.get('profileUrl') || undefined;
     const isOwn = searchParams.get('isOwn') === 'true';
+    const directionParam = searchParams.get('direction');
+    const direction = (directionParam === 'left' || directionParam === 'right') ? directionParam as 'left' | 'right' : undefined;
+    const modeParam = searchParams.get('mode');
+    const mode = (modeParam === 'text' ? 'text' : 'tags') as 'tags' | 'text';
     
-    console.log('parseParams - profileUrl:', profileUrl);
-    console.log('parseParams - all params:', { title, tags, theme, style, width, fontSize, animation, profileUrl, isOwn });
-    
-    return { title, tags, theme, style, width, fontSize, animation, profileUrl, isOwn };
+
+    return { title, tags, url, theme, style, width, fontSize, animation, profileUrl, isOwn, direction, mode };
    }

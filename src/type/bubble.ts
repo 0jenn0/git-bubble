@@ -8,6 +8,8 @@ export interface BubbleParams {
  animation?: Animation;
  profileUrl?: string;
  isOwn?: boolean;
+ direction?: 'left' | 'right';
+ mode?: 'tags' | 'text';
 }
 
 export type Theme = 'light' | 'dark' | 'gradient' | 'purple' | 'orange' | 'mint' | 'neon' | 'pastel';

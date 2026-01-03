@@ -7,9 +7,9 @@ export const themes: Record<Theme, ThemeColors> = {
  accent: '#e0e0e0'
  },
  dark: {
- primary: '#2d3748',
- secondary: '#1a202c',
- accent: '#4a5568'
+ primary: '#1a1a1a',
+ secondary: '#0f0f0f',
+ accent: '#2a2a2a'
  },
  gradient: {
  primary: '#ff9a9e',

@@ -1,67 +1,422 @@
+'use client';
+
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 export default function Home() {
+  // URL 파라미터에서 초기값 읽기
+  const getInitialValue = (key: string, defaultValue: string) => {
+    if (typeof window === 'undefined') return defaultValue;
+    const params = new URLSearchParams(window.location.search);
+    return params.get(key) || defaultValue;
+  };
+
+  const [mode, setMode] = useState<'tags' | 'text'>(() => {
+    const urlMode = getInitialValue('mode', 'tags');
+    return (urlMode === 'text' ? 'text' : 'tags') as 'tags' | 'text';
+  });
+
+  // mode 변경 감지
+  useEffect(() => {
+    console.log('[State] 🔴 mode 변경됨:', mode);
+  }, [mode]);
+  const [tags, setTags] = useState(() => getInitialValue('tags', 'ENFP,풀스택개발자,React.js,커피중독자'));
+  const [text, setText] = useState(() => getInitialValue('tags', '안녕하세요! 이것은 일반 텍스트 모드입니다. 여러 줄로 표시됩니다.'));
+  const [title, setTitle] = useState(() => getInitialValue('title', 'About Me'));
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const urlTheme = getInitialValue('theme', 'light');
+    return (urlTheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
+  });
+  const [direction, setDirection] = useState<'left' | 'right'>(() => {
+    const urlDirection = getInitialValue('direction', 'left');
+    return (urlDirection === 'right' ? 'right' : 'left') as 'left' | 'right';
+  });
+
+  // direction 변경 감지
+  useEffect(() => {
+    console.log('[State] 🟡 direction 변경됨:', direction);
+  }, [direction]);
+  const [profileUrl, setProfileUrl] = useState(() => getInitialValue('profileUrl', ''));
+  const [animation, setAnimation] = useState<'none' | 'float' | 'pulse'>(() => {
+    const urlAnimation = getInitialValue('animation', 'none');
+    return (['none', 'float', 'pulse'].includes(urlAnimation) ? urlAnimation : 'none') as 'none' | 'float' | 'pulse';
+  });
+  const [width, setWidth] = useState(() => {
+    const urlWidth = getInitialValue('width', '400');
+    return parseInt(urlWidth) || 400;
+  });
+  const [fontSize, setFontSize] = useState(() => {
+    const urlFontSize = getInitialValue('fontSize', '12');
+    return parseInt(urlFontSize) || 12;
+  });
+  const [copied, setCopied] = useState(false);
+
+  // URL 파라미터에서 mode에 따라 tags 또는 text 초기화
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const urlMode = params.get('mode') || 'tags';
+    const urlTags = params.get('tags') || '';
+    
+    if (urlTags) {
+      if (urlMode === 'text') {
+        setText(urlTags);
+      } else {
+        setTags(urlTags);
+      }
+    }
+  }, []);
+
+  const generateUrl = useCallback(() => {
+    const params = new URLSearchParams();
+    params.set('tags', mode === 'tags' ? tags : text);
+    params.set('mode', mode);
+    // title이 있을 때만 추가
+    if (title) params.set('title', title);
+    params.set('theme', theme);
+    params.set('direction', direction);
+    if (profileUrl) params.set('profileUrl', profileUrl);
+    if (animation !== 'none') params.set('animation', animation);
+    params.set('width', width.toString());
+    params.set('fontSize', fontSize.toString());
+
+    // 개발 중에는 항상 현재 origin 사용 (로컬 API 호출)
+    const baseUrl = (typeof window !== 'undefined' ? window.location.origin : '');
+    const url = `${baseUrl}/api/bubble?${params.toString()}`;
+
+    // 디버깅: 생성된 URL 확인 (전체 URL 출력)
+    console.log('[generateUrl] 🔵 URL 생성:', {
+      mode,
+      direction,
+      theme,
+      tags: mode === 'tags' ? tags : text,
+      fullUrl: url
+    });
+
+    return url;
+  }, [mode, tags, text, title, theme, direction, profileUrl, animation, width, fontSize]);
+
+  const copyToClipboard = async () => {
+    const url = generateUrl();
+    const htmlCode = `<img src="${url}" />`;
+    
+    try {
+      await navigator.clipboard.writeText(htmlCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // 필수값 체크
+  const hasRequiredValues = mode === 'tags' ? tags.trim().length > 0 : text.trim().length > 0;
+  const missingField = mode === 'tags' ? 'Tags' : 'Text';
+  
+  // previewUrl을 useMemo로 감싸서 mode, tags, text 등이 변경될 때마다 재계산
+  // preview용 URL에는 캐시 버스터를 추가하여 브라우저 캐시 방지
+  const previewUrl = useMemo(() => {
+    const url = generateUrl();
+    const finalUrl = `${url}&_t=${Date.now()}`;
+    console.log('[previewUrl] 🟢 Preview URL 생성:', finalUrl);
+    return finalUrl;
+  }, [generateUrl]);
+
   return (
-  <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center p-8">
-  <div className="max-w-4xl mx-auto text-center">
-  <h1 className="text-6xl font-bold text-white mb-6">
-  🗣️ BubbleTag
-  </h1>
-  <p className="text-xl text-purple-100 mb-12">
-  MZ 개발자를 위한 동적 말풍선 생성 API
-  </p>
-  {/* 예시 말풍선들 */}
-  <div className="flex flex-col items-center gap-8 mb-12">
-  <img 
-  src="/api/bubble?title=About Me&tags=ENFP,풀스택개발자,React.js,커피중독자&theme=gradient"
-  alt="Example Bubble 1"
-  className="rounded-lg shadow-2xl"
-  />
-  <img src="/api/bubble?tags=집에서,넷플릭스,보고,있어&theme=dark&profileUrl=https://i.pinimg.com/736x/5c/05/a1/5c05a1c87bf9a232c51077d58bb8afec.jpg&isOwn=false" alt="Messenger Style" className="rounded-lg shadow-2xl" />
-  <img 
-  src="/api/bubble?title=Tech Stack&tags=TypeScript,Next.js,Prisma&theme=purple&style=glass"
-  alt="Example Bubble 2"
-  className="rounded-lg shadow-2xl"
-  />
-  </div>
-  {/* API 사용법 */}
-  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 text-left">
-  <h2 className="text-2xl font-bold text-white mb-4">🚀 사용법</h2>
-  <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm overflow-x-auto">
-  <code className="text-green-400">
-  {``}
-  </code>
-  </div>
-  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-  <div>
-  <h3 className="font-semibold text-purple-200 mb-2">📋 필수 파라미터</h3>
-  <ul className="text-purple-100 space-y-1">
-  <li><code>tags</code> - 쉼표로 구분된 태그들</li>
-  </ul>
-  </div>
-  <div>
-  <h3 className="font-semibold text-purple-200 mb-2">🎨 선택 파라미터</h3>
-  <ul className="text-purple-100 space-y-1">
-  <li><code>title</code> - 말풍선 소제목</li>
-  <li><code>theme</code> - 색상 테마</li>
-  <li><code>style</code> - 스타일 효과</li>
-  <li><code>animation</code> - 애니메이션</li>
-  </ul>
-  </div>
-  </div>
-  </div>
-  {/* GitHub 링크 */}
-  <div className="mt-8">
-  <a 
-  href="https://github.com/your-username/bubbletag"
-  className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-6 rounded-full transition-all duration-200"
-  target="_blank"
-  rel="noopener noreferrer"
-  >
-  ⭐ GitHub에서 보기
-  </a>
-  </div>
-  </div>
-  </div>
-  );
-  }
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      {/* 헤더 - 말풍선 스타일 (bubble 디자인과 정확히 동일) */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8 md:pt-12">
+        <div className="relative inline-block">
+          <svg width="220" height="60" viewBox="0 0 220 60" className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.1)]">
+            <defs>
+              <filter id="headerShadow">
+                <feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.1"/>
+              </filter>
+            </defs>
+            {/* 말풍선 배경 - bubble과 동일한 path (왼쪽 꼬리) */}
+            <path 
+              d="M 20,10 L 180,10 Q 190,10 190,20 L 190,50 Q 190,60 180,60 L 20,60 Q 10,60 10,50 L 10,38 L 2,30 L 10,22 L 10,20 Q 10,10 20,10 Z" 
+              fill="#ffffff" 
+              stroke="#e0e0e0" 
+              strokeWidth="1" 
+              filter="url(#headerShadow)"
+            />
+            {/* 텍스트 */}
+            <text 
+              x="100" 
+              y="38" 
+              textAnchor="middle" 
+              fill="#000000" 
+              fontFamily="-apple-system, BlinkMacSystemFont, sans-serif" 
+              fontSize="20" 
+              fontWeight="800"
+            >
+              git bubble
+            </text>
+          </svg>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12 pb-24 md:pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+          {/* 프리뷰 - 모바일에서는 맨 위, PC에서는 오른쪽에 sticky */}
+          <div className="lg:order-2 lg:sticky lg:top-6 lg:h-[calc(100vh-4rem)] lg:overflow-y-auto">
+            <div className="lg:h-full lg:flex lg:flex-col">
+              <h2 className="text-xs font-semibold text-black/40 mb-6 uppercase tracking-widest">Preview</h2>
+              <div className="flex justify-center items-center min-h-[200px] lg:flex-1 lg:overflow-auto">
+                {hasRequiredValues ? (
+                  <img
+                    key={previewUrl}
+                    src={previewUrl}
+                    alt="Bubble Preview"
+                    className="max-w-full h-auto"
+                    onError={(e) => {
+                      console.error('Image load error:', e);
+                      console.error('Failed URL:', previewUrl);
+                    }}
+                    onLoad={() => {
+                      console.log('Image loaded successfully:', previewUrl.substring(0, 100));
+                    }}
+                  />
+                ) : (
+                  <div className="text-center px-6">
+                    <p className="text-sm text-black/60 mb-1">필수값 <span className="font-semibold">{missingField}</span>을</p>
+                    <p className="text-sm text-black/60">넣어주세요!</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 설정 패널 - 모바일에서는 아래, PC에서는 왼쪽 */}
+          <div className="lg:order-1 lg:pr-6">
+            <h2 className="text-xs font-semibold text-black/40 mb-8 uppercase tracking-widest">Settings</h2>
               
+              {/* 모드 선택 */}
+              <div className="mb-8">
+                <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
+                  Mode
+                  <span className="text-[10px] font-normal normal-case bg-black text-white px-1.5 py-0.5 rounded-[4px]">필수</span>
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setMode('tags')}
+                    className={`flex-1 px-4 py-2.5 rounded-[4px] text-sm font-medium transition-all ${
+                      mode === 'tags'
+                        ? 'bg-black text-white'
+                        : 'bg-black/5 text-black/60 hover:bg-black/10'
+                    }`}
+                  >
+                    태그
+                  </button>
+                  <button
+                    onClick={() => setMode('text')}
+                    className={`flex-1 px-4 py-2.5 rounded-[4px] text-sm font-medium transition-all ${
+                      mode === 'text'
+                        ? 'bg-black text-white'
+                        : 'bg-black/5 text-black/60 hover:bg-black/10'
+                    }`}
+                  >
+                    텍스트
+                  </button>
+                </div>
+              </div>
+
+              {/* 태그 또는 텍스트 입력 */}
+              {mode === 'tags' ? (
+                <div className="mb-8">
+                  <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
+                    Tags
+                    <span className="text-[10px] font-normal normal-case bg-black text-white px-1.5 py-0.5 rounded-[4px]">필수</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={tags}
+                    onChange={(e) => setTags(e.target.value)}
+                    placeholder="태그1,태그2,태그3"
+                    className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm transition-all"
+                  />
+                  <p className="text-xs text-black/30 mt-2">쉼표로 구분</p>
+                </div>
+              ) : (
+                <div className="mb-8">
+                  <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
+                    Text
+                    <span className="text-[10px] font-normal normal-case bg-black text-white px-1.5 py-0.5 rounded-[4px]">필수</span>
+                  </label>
+                  <textarea
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="일반 텍스트를 입력하세요..."
+                    rows={4}
+                    className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm resize-none transition-all"
+                  />
+                  <p className="text-xs text-black/30 mt-2">자동으로 줄바꿈됩니다</p>
+                </div>
+              )}
+
+              {/* 제목 */}
+              <div className="mb-8">
+                <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
+                  Title
+                  <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">선택</span>
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="제목 (선택사항)"
+                  className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm transition-all"
+                />
+              </div>
+
+              {/* 테마 */}
+              <div className="mb-8">
+                <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
+                  Theme
+                  <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">선택</span>
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setTheme('light')}
+                    className={`flex-1 px-4 py-2.5 rounded-[4px] text-sm font-medium transition-all ${
+                      theme === 'light'
+                        ? 'bg-black text-white'
+                        : 'bg-black/5 text-black/60 hover:bg-black/10'
+                    }`}
+                  >
+                    Light
+                  </button>
+                  <button
+                    onClick={() => setTheme('dark')}
+                    className={`flex-1 px-4 py-2.5 rounded-[4px] text-sm font-medium transition-all ${
+                      theme === 'dark'
+                        ? 'bg-black text-white'
+                        : 'bg-black/5 text-black/60 hover:bg-black/10'
+                    }`}
+                  >
+                    Dark
+                  </button>
+                </div>
+              </div>
+
+              {/* 방향 */}
+              <div className="mb-8">
+                <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
+                  Direction
+                  <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">선택</span>
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setDirection('left')}
+                    className={`flex-1 px-4 py-2.5 rounded-[4px] text-sm font-medium transition-all ${
+                      direction === 'left'
+                        ? 'bg-black text-white'
+                        : 'bg-black/5 text-black/60 hover:bg-black/10'
+                    }`}
+                  >
+                    왼쪽
+                  </button>
+                  <button
+                    onClick={() => setDirection('right')}
+                    className={`flex-1 px-4 py-2.5 rounded-[4px] text-sm font-medium transition-all ${
+                      direction === 'right'
+                        ? 'bg-black text-white'
+                        : 'bg-black/5 text-black/60 hover:bg-black/10'
+                    }`}
+                  >
+                    오른쪽
+                  </button>
+                </div>
+              </div>
+
+              {/* 프로필 이미지 URL */}
+              <div className="mb-8">
+                <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
+                  Profile Image URL
+                  <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">선택</span>
+                </label>
+                <input
+                  type="text"
+                  value={profileUrl}
+                  onChange={(e) => setProfileUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm transition-all"
+                />
+              </div>
+
+              {/* 애니메이션 */}
+              <div className="mb-8">
+                <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
+                  Animation
+                  <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">선택</span>
+                </label>
+                <select
+                  value={animation}
+                  onChange={(e) => setAnimation(e.target.value as 'none' | 'float' | 'pulse')}
+                  className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm transition-all"
+                >
+                  <option value="none">없음</option>
+                  <option value="float">Float</option>
+                  <option value="pulse">Pulse</option>
+                </select>
+              </div>
+
+              {/* 너비 */}
+              <div className="mb-8">
+                <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
+                  Width: {width}px
+                  <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">선택</span>
+                </label>
+                <input
+                  type="range"
+                  min="300"
+                  max="600"
+                  step="20"
+                  value={width}
+                  onChange={(e) => setWidth(Number(e.target.value))}
+                  className="w-full accent-black [&::-webkit-slider-runnable-track]:bg-black/10 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:mt-[-6px] [&::-moz-range-track]:bg-black/10 [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-0"
+                />
+              </div>
+
+              {/* 폰트 크기 */}
+              <div className="mb-8">
+                <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
+                  Font Size: {fontSize}px
+                  <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">선택</span>
+                </label>
+                <input
+                  type="range"
+                  min="10"
+                  max="16"
+                  step="1"
+                  value={fontSize}
+                  onChange={(e) => setFontSize(Number(e.target.value))}
+                  className="w-full accent-black [&::-webkit-slider-runnable-track]:bg-black/10 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:mt-[-6px] [&::-moz-range-track]:bg-black/10 [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-0"
+                />
+              </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 복사 버튼 - Fixed with Glassmorphism */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 backdrop-blur-xl bg-white/80">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+          <div className="flex justify-center lg:justify-end">
+            <div className="w-full max-w-md lg:max-w-xs">
+              <button
+                onClick={copyToClipboard}
+                className={`w-full px-6 py-4 rounded-[4px] text-sm md:text-base font-semibold transition-all ${
+                  copied
+                    ? 'bg-black/10 text-black/60'
+                    : 'bg-black text-white hover:bg-black/90 active:scale-[0.98]'
+                }`}
+              >
+                {copied ? '✓ 복사됨' : '클립보드에 복사'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

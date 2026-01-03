@@ -1,0 +1,467 @@
+import { fetchImageAsBase64 } from './svg-generator';
+
+export interface LinkPreviewParams {
+  url: string;
+  width?: number;
+  theme?: 'light' | 'dark';
+  style?: 'modern' | 'minimal' | 'card';
+}
+
+export interface LinkMetadata {
+  title: string;
+  description: string;
+  image: string;
+  domain: string;
+  favicon: string;
+}
+
+// 웹사이트 메타데이터 추출 함수
+async function fetchLinkMetadata(url: string): Promise<LinkMetadata | null> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; LinkPreview/1.0)',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch: ${response.status}`);
+    }
+
+    const html = await response.text();
+    
+    // 메타 태그 파싱을 위한 정규식
+    const getMetaContent = (property: string) => {
+      const patterns = [
+        new RegExp(`<meta\\s+property="${property}"\\s+content="([^"]*)"`, 'i'),
+        new RegExp(`<meta\\s+name="${property}"\\s+content="([^"]*)"`, 'i'),
+        new RegExp(`<meta\\s+content="([^"]*)"\\s+property="${property}"`, 'i'),
+        new RegExp(`<meta\\s+content="([^"]*)"\\s+name="${property}"`, 'i'),
+      ];
+      
+      for (const pattern of patterns) {
+        const match = html.match(pattern);
+        if (match) return match[1];
+      }
+      return '';
+    };
+
+    const getTitleContent = () => {
+      const ogTitle = getMetaContent('og:title');
+      if (ogTitle) return ogTitle;
+      
+      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      return titleMatch ? titleMatch[1] : '';
+    };
+
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname.replace(/^www\./, '');
+    const baseUrl = `${urlObj.protocol}//${urlObj.host}`;
+
+    // 파비콘 추출 함수
+    const getFavicon = () => {
+      // 1. HTML에서 직접 파비콘 링크 찾기 (여러 패턴 시도)
+      const faviconPatterns = [
+        /<link[^>]+rel=["'](?:icon|shortcut\s+icon|apple-touch-icon)["'][^>]+href=["']([^"']+)["']/i,
+        /<link[^>]+href=["']([^"']+)["'][^>]+rel=["'](?:icon|shortcut\s+icon|apple-touch-icon)["']/i,
+      ];
+      
+      for (const pattern of faviconPatterns) {
+        const matches = html.matchAll(new RegExp(pattern.source, 'gi'));
+        for (const match of matches) {
+          if (match[1]) {
+            let faviconUrl = match[1].trim();
+            // 상대 경로를 절대 경로로 변환
+            if (faviconUrl.startsWith('//')) {
+              faviconUrl = `${urlObj.protocol}${faviconUrl}`;
+            } else if (faviconUrl.startsWith('/')) {
+              faviconUrl = `${baseUrl}${faviconUrl}`;
+            } else if (!faviconUrl.startsWith('http')) {
+              faviconUrl = `${baseUrl}/${faviconUrl}`;
+            }
+            return faviconUrl;
+          }
+        }
+      }
+      
+      // 2. Google 파비콘 API (최종 폴백)
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+    };
+
+    return {
+      title: getTitleContent() || domain,
+      description: getMetaContent('og:description') || getMetaContent('description') || '',
+      image: getMetaContent('og:image') || '',
+      domain,
+      favicon: getFavicon()
+    };
+
+  } catch (error) {
+    console.error('Error fetching link metadata:', error);
+    return null;
+  }
+}
+
+// 텍스트를 여러 줄로 나누는 함수
+function wrapText(text: string, maxWidth: number, fontSize: number): string[] {
+  if (!text) return [];
+  
+  // 더 보수적인 폭 계산 (한글, 이모지 고려)
+  const getCharWidth = (char: string) => {
+    // 이모지나 특수 문자 (유니코드 범위)
+    if (/[\u{1F300}-\u{1F9FF}]/u.test(char) || /[\u{2600}-\u{26FF}]/u.test(char) || /[\u{1F600}-\u{1F64F}]/u.test(char)) {
+      return fontSize * 1.3; // 이모지는 더 넓음
+    }
+    // 한글, 한자, 일본어
+    if (/[가-힣一-龯あ-んア-ン]/.test(char)) {
+      return fontSize * 1.15; // 한글은 더 넓음
+    }
+    // 영문, 숫자, 기호
+    return fontSize * 0.7;
+  };
+  
+  const getTextWidth = (str: string) => {
+    let width = 0;
+    for (let i = 0; i < str.length; i++) {
+      width += getCharWidth(str[i]);
+    }
+    return width;
+  };
+  
+  // 공백으로 단어 분리
+  const words = text.split(/\s+/).filter(w => w.length > 0);
+  if (words.length === 0) return [text];
+  
+  const lines: string[] = [];
+  let currentLine = '';
+  
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const testWidth = getTextWidth(testLine);
+    
+    // 95% 이상 차면 줄바꿈 (더 넓게 사용)
+    if (testWidth <= maxWidth * 0.95) {
+      currentLine = testLine;
+    } else {
+      // 현재 줄이 있으면 저장하고 새 줄 시작
+      if (currentLine.trim()) {
+        lines.push(currentLine.trim());
+        currentLine = word;
+      } else {
+        // 단어 자체가 너무 긴 경우 문자 단위로 자르기
+        let truncated = '';
+        for (let i = 0; i < word.length; i++) {
+          const char = word[i];
+          if (getTextWidth(truncated + char) <= maxWidth * 0.95) {
+            truncated += char;
+          } else {
+            break;
+          }
+        }
+        if (truncated) {
+          lines.push(truncated);
+          currentLine = word.substring(truncated.length) || '';
+        } else {
+          // 한 글자도 안 들어가면 강제로 첫 글자
+          lines.push(word[0] || '');
+          currentLine = word.substring(1) || '';
+        }
+      }
+    }
+  }
+  
+  // 마지막 줄 추가
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  
+  return lines.length > 0 ? lines : [text];
+}
+
+export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise<string> {
+  const {
+    url,
+    width = 280,
+    theme = 'light',
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    style = 'modern'
+  } = params;
+
+  // 링크 메타데이터 가져오기
+  const metadata = await fetchLinkMetadata(url);
+  if (!metadata) {
+    return generateFallbackLinkSVG(url, width, theme);
+  }
+
+  // 힙한 모노톤 기하학 스타일
+  const colors = {
+    light: {
+      bg: '#FFFFFF',
+      black: '#000000',
+      darkGray: '#2C2C2C',
+      gray: '#666666',
+      lightGray: '#E5E5E5',
+      accent: '#FF0000'
+    },
+    dark: {
+      bg: '#1A1A1A',
+      black: '#FFFFFF',
+      darkGray: '#E0E0E0',
+      gray: '#BBBBBB',
+      lightGray: '#404040',
+      accent: '#FF6B6B'
+    }
+  };
+
+  const c = colors[theme];
+  const padding = 16; // 패딩 증가
+  const thumbnailSize = 100;
+  const thumbnailX = padding;
+  const thumbnailY = padding;
+  const lineHeight = 20;
+  
+  // 썸네일 이미지 처리
+  let thumbnailImage = '';
+  if (metadata.image) {
+    try {
+      const base64Thumbnail = await fetchImageAsBase64(metadata.image);
+      if (base64Thumbnail) {
+        thumbnailImage = base64Thumbnail;
+      }
+    } catch {
+      // 썸네일 로드 실패 시 무시
+    }
+  }
+  
+  // 썸네일이 있으면 오른쪽에 배치, 없으면 왼쪽에서 시작
+  const hasThumbnail = !!thumbnailImage;
+  const contentX = hasThumbnail ? thumbnailX + thumbnailSize + 20 : padding;
+  const contentWidth = width - contentX - padding;
+  
+  // 텍스트가 잘리지 않도록 여유 공간 확보
+  // 썸네일이 있을 때는 더 넓게 사용 가능하도록 조정
+  const safeTitleWidth = hasThumbnail 
+    ? Math.max(contentWidth - 5, 380)  // 썸네일 있을 때 더 넓게
+    : Math.max(contentWidth - 10, 450); // 썸네일 없을 때
+  const safeDescWidth = hasThumbnail
+    ? Math.max(contentWidth - 5, 160)  // 썸네일 있을 때 더 넓게
+    : Math.max(contentWidth - 10, 130); // 썸네일 없을 때
+  
+  // 텍스트 처리 - 여러 줄로 나누기 (안전한 폭 사용)
+  const titleLines = wrapText(metadata.title || '', safeTitleWidth, 16);
+  const descriptionLines = wrapText(metadata.description || '', safeDescWidth, 11);
+  
+  // 최대 2줄까지만 표시
+  const maxTitleLines = 2;
+  const maxDescLines = 2;
+  const displayTitleLines = titleLines.slice(0, maxTitleLines);
+  const displayDescLines = descriptionLines.slice(0, maxDescLines);
+  
+  // 높이 계산 (동적으로 조정) - 높이 증가
+  const titleHeight = displayTitleLines.length * lineHeight;
+  const descHeight = displayDescLines.length * (lineHeight - 4);
+  const minHeight = padding + Math.max(thumbnailSize, titleHeight + descHeight + 40) + padding;
+  const height = Math.max(160, minHeight);
+  
+  // 파비콘 처리 - fetchImageAsBase64를 사용하여 base64로 변환
+  let faviconImage = '';
+  
+  if (metadata.favicon) {
+    // 여러 파비콘 소스를 시도 (Google 파비콘 API를 먼저 시도 - 가장 안정적)
+    const faviconUrls = [
+      `https://www.google.com/s2/favicons?domain=${metadata.domain}&sz=32`,
+      metadata.favicon,
+      `https://${metadata.domain}/favicon.ico`,
+      `https://${metadata.domain}/favicon.png`,
+    ];
+    
+    for (const faviconUrl of faviconUrls) {
+      try {
+        const base64Favicon = await fetchImageAsBase64(faviconUrl);
+        if (base64Favicon) {
+          faviconImage = base64Favicon;
+          break; // 성공하면 루프 종료
+        }
+      } catch {
+        // 다음 URL 시도
+        continue;
+      }
+    }
+  }
+
+  // 말풍선 스타일 디자인
+  const borderRadius = 16;
+  const shadowOffset = 2;
+  
+  return `
+<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <!-- 그림자 필터 -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="${shadowOffset}" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.1"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- 썸네일 클리핑 경로 (둥근 모서리) -->
+    <clipPath id="thumbnailClip">
+      <rect x="${thumbnailX}" y="${thumbnailY}" width="${thumbnailSize}" height="${thumbnailSize}" rx="${borderRadius}" ry="${borderRadius}"/>
+    </clipPath>
+  </defs>
+  
+  <!-- 말풍선 배경 (둥근 모서리) -->
+  <rect x="${padding / 2}" y="${padding / 2}" width="${width - padding}" height="${height - padding}" 
+        rx="${borderRadius}" ry="${borderRadius}" 
+        fill="${c.bg}" 
+        stroke="${c.lightGray}" 
+        stroke-width="1"
+        filter="url(#shadow)"/>
+  
+  <!-- 썸네일 이미지 (왼쪽, 둥근 모서리) - 있을 때만 렌더링 -->
+  ${hasThumbnail 
+    ? `<image x="${thumbnailX}" y="${thumbnailY}" width="${thumbnailSize}" height="${thumbnailSize}" 
+              href="${thumbnailImage.replace(/"/g, '&quot;')}" 
+              clip-path="url(#thumbnailClip)"
+              preserveAspectRatio="xMidYMid cover" />`
+    : ''}
+  
+  <!-- 파비콘과 도메인 -->
+  ${faviconImage 
+    ? `<image x="${contentX}" y="${padding + 9.5}" width="14" height="14" 
+              href="${faviconImage.replace(/"/g, '&quot;')}" 
+              preserveAspectRatio="xMidYMid slice" />`
+    : ''}
+  <text x="${contentX + (faviconImage ? 20 : 0)}" y="${padding + 22}" 
+        fill="${c.gray}" 
+        font-family="Helvetica, Arial, sans-serif" 
+        font-size="11" font-weight="500">${metadata.domain}</text>
+  
+  <!-- 제목 (여러 줄) -->
+  ${displayTitleLines.map((line, index) => {
+    const displayLine = line.length > 0 ? line : ' ';
+    const showEllipsis = index === maxTitleLines - 1 && titleLines.length > maxTitleLines;
+    return `
+  <text x="${contentX}" y="${padding + 44 + index * lineHeight}" 
+        fill="${c.black}" 
+        font-family="Helvetica, Arial, sans-serif" 
+        font-size="16" 
+        font-weight="600">${displayLine}${showEllipsis ? '...' : ''}</text>`;
+  }).join('')}
+  
+  <!-- 설명 (여러 줄) -->
+  ${displayDescLines.map((line, index) => {
+    const displayLine = line.length > 0 ? line : ' ';
+    const showEllipsis = index === maxDescLines - 1 && descriptionLines.length > maxDescLines;
+    return `
+  <text x="${contentX}" y="${padding + 44 + titleHeight + 8 + index * (lineHeight - 4)}" 
+        fill="${c.gray}" 
+        font-family="Helvetica, Arial, sans-serif" 
+        font-size="11">${displayLine}${showEllipsis ? '...' : ''}</text>`;
+  }).join('')}
+
+  <!-- 호버 효과 -->
+  <rect width="${width}" height="${height}" 
+        fill="transparent" style="cursor: pointer;">
+    <title>${metadata.title} - ${metadata.domain}</title>
+  </rect>
+</svg>`.trim();
+}
+
+// 메타데이터 로드 실패 시 폴백 SVG (기하학적 모노톤 스타일)
+function generateFallbackLinkSVG(url: string, width: number, theme: 'light' | 'dark'): string {
+  const colors = {
+    light: {
+      bg: '#FFFFFF',
+      black: '#000000',
+      darkGray: '#2C2C2C',
+      gray: '#666666',
+      lightGray: '#E5E5E5',
+      accent: '#FF0000'
+    },
+    dark: {
+      bg: '#1A1A1A',
+      black: '#FFFFFF',
+      darkGray: '#E0E0E0',
+      gray: '#BBBBBB',
+      lightGray: '#404040',
+      accent: '#FF6B6B'
+    }
+  };
+
+  const c = colors[theme];
+  const urlObj = new URL(url);
+  const domain = urlObj.hostname.replace(/^www\./, '');
+  const height = 140;
+  const thumbnailSize = 100;
+  const thumbnailX = 20;
+  const thumbnailY = 20;
+  const contentX = thumbnailX + thumbnailSize + 20;
+  const borderRadius = 16;
+  const shadowOffset = 2;
+  
+  return `
+<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 그림자 필터 -->
+    <filter id="fallbackShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="${shadowOffset}" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.1"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- 썸네일 클리핑 경로 (둥근 모서리) -->
+    <clipPath id="fallbackThumbnailClip">
+      <rect x="${thumbnailX}" y="${thumbnailY}" width="${thumbnailSize}" height="${thumbnailSize}" rx="${borderRadius}" ry="${borderRadius}"/>
+    </clipPath>
+  </defs>
+  
+  <!-- 말풍선 배경 (둥근 모서리) -->
+  <rect x="10" y="10" width="${width - 20}" height="${height - 20}" 
+        rx="${borderRadius}" ry="${borderRadius}" 
+        fill="${c.bg}" 
+        stroke="${c.lightGray}" 
+        stroke-width="1"
+        filter="url(#fallbackShadow)"/>
+  
+  <!-- 썸네일 플레이스홀더 (둥근 모서리) -->
+  <rect x="${thumbnailX}" y="${thumbnailY}" width="${thumbnailSize}" height="${thumbnailSize}" 
+        rx="${borderRadius}" ry="${borderRadius}" 
+        fill="${c.lightGray}"/>
+  
+  <!-- 도메인 -->
+  <text x="${contentX}" y="35" 
+        fill="${c.gray}" 
+        font-family="Helvetica, Arial, sans-serif" 
+        font-size="11" font-weight="500">${domain}</text>
+  
+  <!-- 제목 -->
+  <text x="${contentX}" y="58" 
+        fill="${c.black}" 
+        font-family="Helvetica, Arial, sans-serif" 
+        font-size="16" font-weight="600">링크 미리보기</text>
+  
+  <!-- 설명 -->
+  <text x="${contentX}" y="80" 
+        fill="${c.gray}" 
+        font-family="Helvetica, Arial, sans-serif" 
+        font-size="11">메타데이터를 불러올 수 없습니다</text>
+
+  <!-- 호버 효과 -->
+  <rect width="${width}" height="${height}" 
+        fill="transparent" style="cursor: pointer;">
+    <title>링크 미리보기 - ${domain}</title>
+  </rect>
+</svg>`.trim();
+}
