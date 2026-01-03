@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useImageUpload } from '@/hooks/useImageUpload';
 
 export default function Home() {
   // URL 파라미터에서 초기값 읽기
@@ -49,6 +50,9 @@ export default function Home() {
     return parseInt(urlFontSize) || 12;
   });
   const [copied, setCopied] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadMutation = useImageUpload();
 
   // URL 파라미터에서 mode에 따라 tags 또는 text 초기화
   useEffect(() => {
@@ -98,13 +102,51 @@ export default function Home() {
   const copyToClipboard = async () => {
     const url = generateUrl();
     const htmlCode = `<img src="${url}" />`;
-    
+
     try {
       await navigator.clipboard.writeText(htmlCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
+    }
+  };
+
+  // 이미지 업로드 핸들러
+  const handleFileSelect = async (file: File) => {
+    try {
+      const result = await uploadMutation.mutateAsync(file);
+      if (result.publicUrl) {
+        setProfileUrl(result.publicUrl);
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      handleFileSelect(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
     }
   };
 
@@ -329,12 +371,75 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* 프로필 이미지 URL */}
+              {/* 프로필 이미지 */}
               <div className="mb-8">
                 <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
-                  Profile Image URL
+                  Profile Image
                   <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">선택</span>
                 </label>
+
+                {/* 이미지 업로드 영역 */}
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all mb-3 ${
+                    isDragging
+                      ? 'border-black bg-black/5'
+                      : 'border-black/20 hover:border-black/40'
+                  }`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleFileInputChange}
+                    className="hidden"
+                  />
+
+                  {uploadMutation.isPending ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-6 h-6 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                      <p className="text-sm text-black/60">업로드 중...</p>
+                    </div>
+                  ) : profileUrl ? (
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={profileUrl}
+                        alt="Profile preview"
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                      <div className="flex-1 text-left">
+                        <p className="text-sm text-black/80 truncate">{profileUrl.split('/').pop()}</p>
+                        <p className="text-xs text-black/40">클릭하여 변경</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <svg className="w-8 h-8 text-black/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-sm text-black/60">
+                        이미지를 드래그하거나 클릭하여 업로드
+                      </p>
+                      <p className="text-xs text-black/30">JPG, PNG, GIF, WebP (최대 5MB)</p>
+                    </div>
+                  )}
+                </div>
+
+                {uploadMutation.isError && (
+                  <p className="text-xs text-red-500 mb-2">
+                    업로드 실패: {uploadMutation.error?.message}
+                  </p>
+                )}
+
+                {/* URL 직접 입력 */}
+                <div className="flex items-center gap-2 text-xs text-black/40 mb-2">
+                  <div className="flex-1 h-px bg-black/10" />
+                  <span>또는 URL 직접 입력</span>
+                  <div className="flex-1 h-px bg-black/10" />
+                </div>
                 <input
                   type="text"
                   value={profileUrl}
@@ -342,6 +447,15 @@ export default function Home() {
                   placeholder="https://..."
                   className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm transition-all"
                 />
+
+                {profileUrl && (
+                  <button
+                    onClick={() => setProfileUrl('')}
+                    className="mt-2 text-xs text-black/40 hover:text-black/60 transition-colors"
+                  >
+                    이미지 제거
+                  </button>
+                )}
               </div>
 
               {/* 애니메이션 */}
