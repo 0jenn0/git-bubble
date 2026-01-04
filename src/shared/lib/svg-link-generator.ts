@@ -6,6 +6,10 @@ export interface LinkPreviewParams {
   theme?: 'light' | 'dark';
   style?: 'modern' | 'minimal' | 'card';
   thumbnail?: string;
+  badge?: boolean;
+  badgeText?: string;
+  badgeImage?: string;
+  badgeColor?: string;
 }
 
 export interface LinkMetadata {
@@ -186,13 +190,17 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
     theme = 'light',
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     style = 'modern',
-    thumbnail
+    thumbnail,
+    badge = false,
+    badgeText = 'NEW',
+    badgeImage,
+    badgeColor = '#FF0000'
   } = params;
 
   // 링크 메타데이터 가져오기
   const metadata = await fetchLinkMetadata(url);
   if (!metadata) {
-    return generateFallbackLinkSVG(url, width, theme);
+    return generateFallbackLinkSVG(url, width, theme, badge, badgeText, badgeImage, badgeColor);
   }
 
   // 힙한 모노톤 기하학 스타일
@@ -299,10 +307,23 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
     }
   }
 
+  // 뱃지 이미지 처리
+  let badgeImageBase64 = '';
+  if (badge && badgeImage) {
+    try {
+      const base64Badge = await fetchImageAsBase64(badgeImage);
+      if (base64Badge) {
+        badgeImageBase64 = base64Badge;
+      }
+    } catch {
+      // 뱃지 이미지 로드 실패 시 무시
+    }
+  }
+
   // 말풍선 스타일 디자인
   const borderRadius = 16;
   const shadowOffset = 2;
-  
+
   return `
 <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
@@ -318,10 +339,15 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-    
+
     <!-- 썸네일 클리핑 경로 (둥근 모서리) -->
     <clipPath id="thumbnailClip">
       <rect x="${thumbnailX}" y="${thumbnailY}" width="${thumbnailSize}" height="${thumbnailSize}" rx="${borderRadius}" ry="${borderRadius}"/>
+    </clipPath>
+
+    <!-- 뱃지 클리핑 경로 -->
+    <clipPath id="badgeClip">
+      <circle cx="0" cy="0" r="22"/>
     </clipPath>
   </defs>
   
@@ -369,11 +395,25 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
     const displayLine = line.length > 0 ? line : ' ';
     const showEllipsis = index === maxDescLines - 1 && descriptionLines.length > maxDescLines;
     return `
-  <text x="${contentX}" y="${padding + 44 + titleHeight + 8 + index * (lineHeight - 4)}" 
-        fill="${c.gray}" 
-        font-family="Helvetica, Arial, sans-serif" 
+  <text x="${contentX}" y="${padding + 44 + titleHeight + 8 + index * (lineHeight - 4)}"
+        fill="${c.gray}"
+        font-family="Helvetica, Arial, sans-serif"
         font-size="11">${displayLine}${showEllipsis ? '...' : ''}</text>`;
   }).join('')}
+
+  <!-- 뱃지 (왼쪽 상단, pulse 애니메이션) -->
+  ${badge ? `
+  <g transform="translate(${padding + 4}, ${padding + 4})">
+    <circle cx="0" cy="0" r="22" fill="${badgeColor}">
+      <animate attributeName="r" values="22;24;22" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
+      <animate attributeName="opacity" values="1;0.8;1" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
+    </circle>
+    ${badgeImageBase64
+      ? `<clipPath id="badgeImgClip"><circle cx="0" cy="0" r="20"/></clipPath>
+         <image x="-20" y="-20" width="40" height="40" href="${badgeImageBase64.replace(/"/g, '&quot;')}" clip-path="url(#badgeImgClip)" preserveAspectRatio="xMidYMid slice"/>`
+      : `<text x="0" y="5" fill="#FFFFFF" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">${badgeText}</text>`
+    }
+  </g>` : ''}
 
   <!-- 호버 효과 -->
   <rect width="${width}" height="${height}" 
@@ -384,7 +424,16 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
 }
 
 // 메타데이터 로드 실패 시 폴백 SVG (기하학적 모노톤 스타일)
-function generateFallbackLinkSVG(url: string, width: number, theme: 'light' | 'dark'): string {
+function generateFallbackLinkSVG(
+  url: string,
+  width: number,
+  theme: 'light' | 'dark',
+  badge: boolean = false,
+  badgeText: string = 'NEW',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _badgeImage?: string,
+  badgeColor: string = '#FF0000'
+): string {
   const colors = {
     light: {
       bg: '#FFFFFF',
@@ -446,6 +495,7 @@ function generateFallbackLinkSVG(url: string, width: number, theme: 'light' | 'd
     <clipPath id="fallbackThumbnailClip">
       <rect x="${thumbnailX}" y="${thumbnailY}" width="${thumbnailSize}" height="${thumbnailSize}" rx="${borderRadius}" ry="${borderRadius}"/>
     </clipPath>
+
   </defs>
   
   <!-- 말풍선 배경 (둥근 모서리) -->
@@ -474,13 +524,23 @@ function generateFallbackLinkSVG(url: string, width: number, theme: 'light' | 'd
         font-size="16" font-weight="600">링크 미리보기</text>
   
   <!-- 설명 -->
-  <text x="${contentX}" y="80" 
-        fill="${c.gray}" 
-        font-family="Helvetica, Arial, sans-serif" 
+  <text x="${contentX}" y="80"
+        fill="${c.gray}"
+        font-family="Helvetica, Arial, sans-serif"
         font-size="11">메타데이터를 불러올 수 없습니다</text>
 
+  <!-- 뱃지 (왼쪽 상단, pulse 애니메이션) -->
+  ${badge ? `
+  <g transform="translate(${padding + 4}, ${padding + 4})">
+    <circle cx="0" cy="0" r="22" fill="${badgeColor}">
+      <animate attributeName="r" values="22;24;22" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
+      <animate attributeName="opacity" values="1;0.8;1" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
+    </circle>
+    <text x="0" y="5" fill="#FFFFFF" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">${badgeText}</text>
+  </g>` : ''}
+
   <!-- 호버 효과 -->
-  <rect width="${width}" height="${height}" 
+  <rect width="${width}" height="${height}"
         fill="transparent" style="cursor: pointer;">
     <title>링크 미리보기 - ${domain}</title>
   </rect>

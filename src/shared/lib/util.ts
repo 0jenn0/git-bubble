@@ -56,6 +56,10 @@ export function calculateTagWidth(text: string, fontSize: number): number {
     const modeParam = searchParams.get('mode');
     const mode = (modeParam === 'text' ? 'text' : 'tags') as 'tags' | 'text';
     const thumbnail = searchParams.get('thumbnail') || undefined;
+    const badge = searchParams.get('badge') === 'true';
+    const badgeText = searchParams.get('badgeText') || 'NEW';
+    const badgeImage = searchParams.get('badgeImage') || undefined;
+    const badgeColor = searchParams.get('badgeColor') || '#FF0000';
 
-    return { title, tags, url, theme, style, width, fontSize, animation, profileUrl, isOwn, direction, mode, thumbnail };
+    return { title, tags, url, theme, style, width, fontSize, animation, profileUrl, isOwn, direction, mode, thumbnail, badge, badgeText, badgeImage, badgeColor };
    }

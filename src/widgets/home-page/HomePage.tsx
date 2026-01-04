@@ -112,10 +112,18 @@ export function HomePage() {
                 theme={linkConfig.theme}
                 width={linkConfig.width}
                 customThumbnail={linkConfig.customThumbnail}
+                badgeEnabled={linkConfig.badgeEnabled}
+                badgeText={linkConfig.badgeText}
+                badgeImage={linkConfig.badgeImage}
+                badgeColor={linkConfig.badgeColor}
                 setUrl={linkConfig.setUrl}
                 setTheme={linkConfig.setTheme}
                 setWidth={linkConfig.setWidth}
                 setCustomThumbnail={linkConfig.setCustomThumbnail}
+                setBadgeEnabled={linkConfig.setBadgeEnabled}
+                setBadgeText={linkConfig.setBadgeText}
+                setBadgeImage={linkConfig.setBadgeImage}
+                setBadgeColor={linkConfig.setBadgeColor}
               />
             </>
           )}

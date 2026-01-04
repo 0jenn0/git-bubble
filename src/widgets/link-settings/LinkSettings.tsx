@@ -11,10 +11,18 @@ interface LinkSettingsProps {
   theme: Theme;
   width: number;
   customThumbnail: string;
+  badgeEnabled: boolean;
+  badgeText: string;
+  badgeImage: string;
+  badgeColor: string;
   setUrl: (url: string) => void;
   setTheme: (theme: Theme) => void;
   setWidth: (width: number) => void;
   setCustomThumbnail: (thumbnail: string) => void;
+  setBadgeEnabled: (enabled: boolean) => void;
+  setBadgeText: (text: string) => void;
+  setBadgeImage: (image: string) => void;
+  setBadgeColor: (color: string) => void;
 }
 
 export function LinkSettings({
@@ -22,14 +30,25 @@ export function LinkSettings({
   theme,
   width,
   customThumbnail,
+  badgeEnabled,
+  badgeText,
+  badgeImage,
+  badgeColor,
   setUrl,
   setTheme,
   setWidth,
   setCustomThumbnail,
+  setBadgeEnabled,
+  setBadgeText,
+  setBadgeImage,
+  setBadgeColor,
 }: LinkSettingsProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [isBadgeDragging, setIsBadgeDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const badgeFileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useImageUpload();
+  const badgeUploadMutation = useImageUpload();
 
   const handleFileSelect = async (file: File) => {
     try {
@@ -80,6 +99,34 @@ export function LinkSettings({
 
   const handleWidthChangeEnd = () => {
     analytics.changeWidth(width);
+  };
+
+  const handleBadgeFileSelect = async (file: File) => {
+    try {
+      const result = await badgeUploadMutation.mutateAsync(file);
+      if (result.publicUrl) {
+        setBadgeImage(result.publicUrl);
+        analytics.uploadImage(true);
+      }
+    } catch {
+      analytics.uploadImage(false);
+    }
+  };
+
+  const handleBadgeDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsBadgeDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      handleBadgeFileSelect(file);
+    }
+  };
+
+  const handleBadgeFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleBadgeFileSelect(file);
+    }
   };
 
   return (
@@ -249,6 +296,142 @@ export function LinkSettings({
           >
             썸네일 제거
           </button>
+        )}
+      </div>
+
+      {/* Badge Settings */}
+      <div className="mb-8">
+        <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
+          Badge
+          <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">
+            선택
+          </span>
+        </label>
+
+        {/* Badge Toggle */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => setBadgeEnabled(!badgeEnabled)}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              badgeEnabled ? 'bg-black' : 'bg-black/20'
+            }`}
+          >
+            <span
+              className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                badgeEnabled ? 'left-6' : 'left-1'
+              }`}
+            />
+          </button>
+          <span className="text-sm text-black/60">
+            {badgeEnabled ? '뱃지 활성화' : '뱃지 비활성화'}
+          </span>
+        </div>
+
+        {badgeEnabled && (
+          <div className="space-y-4 pl-4 border-l-2 border-black/10">
+            {/* Badge Text */}
+            <div>
+              <label className="block text-xs text-black/40 mb-2">뱃지 텍스트</label>
+              <input
+                type="text"
+                value={badgeText}
+                onChange={(e) => setBadgeText(e.target.value)}
+                placeholder="NEW"
+                maxLength={10}
+                className="w-full px-3 py-2 bg-black/5 rounded-[4px] text-sm focus:outline-none focus:ring-1 focus:ring-black/20"
+              />
+              <p className="text-xs text-black/30 mt-1">
+                이미지가 없을 때 표시됩니다 (최대 10자)
+              </p>
+            </div>
+
+            {/* Badge Color */}
+            <div>
+              <label className="block text-xs text-black/40 mb-2">뱃지 색상</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={badgeColor}
+                  onChange={(e) => setBadgeColor(e.target.value)}
+                  className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent"
+                />
+                <div className="flex gap-2">
+                  {['#FF0000', '#FF6B00', '#FFD600', '#00C853', '#2979FF', '#7C4DFF', '#E91E63', '#000000'].map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setBadgeColor(color)}
+                      className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
+                        badgeColor === color ? 'ring-2 ring-offset-2 ring-black/30' : ''
+                      }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Badge Image */}
+            <div>
+              <label className="block text-xs text-black/40 mb-2">뱃지 이미지 (선택)</label>
+              <div
+                onDrop={handleBadgeDrop}
+                onDragOver={(e) => { e.preventDefault(); setIsBadgeDragging(true); }}
+                onDragLeave={(e) => { e.preventDefault(); setIsBadgeDragging(false); }}
+                onClick={() => badgeFileInputRef.current?.click()}
+                className={`relative border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all ${
+                  isBadgeDragging ? 'border-black bg-black/5' : 'border-black/20 hover:border-black/40'
+                }`}
+              >
+                <input
+                  ref={badgeFileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleBadgeFileInputChange}
+                  className="hidden"
+                />
+
+                {badgeUploadMutation.isPending ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                    <p className="text-sm text-black/60">업로드 중...</p>
+                  </div>
+                ) : badgeImage ? (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={badgeImage}
+                      alt="Badge"
+                      className="w-8 h-8 rounded object-cover"
+                    />
+                    <div className="flex-1 text-left">
+                      <p className="text-xs text-black/80 truncate">
+                        {badgeImage.split('/').pop()}
+                      </p>
+                      <p className="text-xs text-black/40">클릭하여 변경</p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-black/40">
+                    뱃지 이미지 업로드 (선택)
+                  </p>
+                )}
+              </div>
+
+              {badgeImage && (
+                <button
+                  onClick={() => setBadgeImage('')}
+                  className="text-xs text-black/40 hover:text-black/60 transition-colors mt-2"
+                >
+                  이미지 제거
+                </button>
+              )}
+            </div>
+
+            <div className="bg-black/5 rounded-lg p-3">
+              <p className="text-xs text-black/60 leading-relaxed">
+                뱃지는 링크 프리뷰 왼쪽 상단에 펄스 애니메이션과 함께 표시됩니다.
+              </p>
+            </div>
+          </div>
         )}
       </div>
     </div>
