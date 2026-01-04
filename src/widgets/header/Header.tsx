@@ -1,11 +1,8 @@
 'use client';
 
-import { useVisitorCount } from '@/features/visitor-counter';
 import { analytics } from '@/shared/lib/analytics';
 
 export function Header() {
-  const visitorCount = useVisitorCount();
-
   const handleGitHubStarClick = () => {
     analytics.clickGitHubStar();
   };
@@ -53,15 +50,6 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-3">
-            {visitorCount !== null && (
-              <div className="flex items-center gap-1.5 px-3 py-2 bg-black/5 rounded-full">
-                <span className="text-sm">👀</span>
-                <span className="text-sm font-medium text-black/70">
-                  {visitorCount.toLocaleString()}
-                </span>
-              </div>
-            )}
-
             <a
               href="https://github.com/0jenn0/git-bubble"
               target="_blank"
