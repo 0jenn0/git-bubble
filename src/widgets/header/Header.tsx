@@ -14,11 +14,16 @@ export function Header() {
     <header className="sticky top-0 z-30 backdrop-blur-xl bg-white/80 border-b border-black/5">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-3">
         <div className="flex items-center justify-between">
-          <div className="relative inline-block">
+          <div className="flex items-center gap-3">
+            <img
+              src="https://ohxmzftzhbcqmbirlvxc.supabase.co/storage/v1/object/public/profile-images/cat-1.jpg"
+              alt="Logo"
+              className="w-10 h-10 rounded-full object-cover  -mr-4"
+            />
             <svg
-              width="220"
-              height="60"
-              viewBox="0 0 220 60"
+              width="186"
+              height="50"
+              viewBox="-6 0 186 50"
               className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
             >
               <defs>
@@ -27,22 +32,22 @@ export function Header() {
                 </filter>
               </defs>
               <path
-                d="M 20,10 L 180,10 Q 190,10 190,20 L 190,50 Q 190,60 180,60 L 20,60 Q 10,60 10,50 L 10,38 L 2,30 L 10,22 L 10,20 Q 10,10 20,10 Z"
+                d="M 15,5 L 165,5 Q 175,5 175,15 L 175,35 Q 175,45 165,45 L 15,45 Q 5,45 5,35 L 5,30 L -3,25 L 5,20 L 5,15 Q 5,5 15,5 Z"
                 fill="#ffffff"
                 stroke="#e0e0e0"
                 strokeWidth="1"
                 filter="url(#headerShadow)"
               />
               <text
-                x="100"
-                y="38"
+                x="90"
+                y="30"
                 textAnchor="middle"
                 fill="#000000"
                 fontFamily="-apple-system, BlinkMacSystemFont, sans-serif"
-                fontSize="20"
+                fontSize="18"
                 fontWeight="800"
               >
-                git bubble
+                GIT BUBBLE
               </text>
             </svg>
           </div>
