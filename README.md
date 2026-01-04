@@ -8,7 +8,8 @@
 
 <img src="https://git-bubble.vercel.app/api/bubble?tags=React,TypeScript,Next.js&title=Tech%20Stack&theme=light&direction=left&width=400&fontSize=12&profileUrl=https://ohxmzftzhbcqmbirlvxc.supabase.co/storage/v1/object/public/profile-images/cat-1.jpg" alt="Example" />
 
-<img src="https://git-bubble.vercel.app/api/bubble?tags=INTP,Coffee%20Lover,FE Developer&title=About%20Me&theme=dark&direction=right&width=400&fontSize=12&profileUrl=https://ohxmzftzhbcqmbirlvxc.supabase.co/storage/v1/object/public/profile-images/cat-2.jpg" alt="Example Dark" />
+
+<img src="https://git-bubble.vercel.app/api/bubble?tags=INTP,Coffee%20Lover,FE%20Developer&title=About%20Me&theme=dark&direction=right&width=400&fontSize=12&profileUrl=https%3A%2F%2Fohxmzftzhbcqmbirlvxc.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fprofile-images%2Fcat-2.jpg" alt="Example Dark" />
 
 <br />
 <br />
