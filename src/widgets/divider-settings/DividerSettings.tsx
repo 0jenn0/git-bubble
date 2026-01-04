@@ -9,11 +9,13 @@ interface DividerSettingsProps {
   animation: boolean;
   width: number;
   theme: Theme;
+  size: number;
   setStyle: (style: DividerStyle) => void;
   setColor: (color: string) => void;
   setAnimation: (animation: boolean) => void;
   setWidth: (width: number) => void;
   setTheme: (theme: Theme) => void;
+  setSize: (size: number) => void;
 }
 
 const styleOptions: { value: DividerStyle; label: string; icon: string }[] = [
@@ -30,11 +32,13 @@ export function DividerSettings({
   animation,
   width,
   theme,
+  size,
   setStyle,
   setColor,
   setAnimation,
   setWidth,
   setTheme,
+  setSize,
 }: DividerSettingsProps) {
   return (
     <div className="lg:order-1 lg:pr-6">
@@ -146,6 +150,25 @@ export function DividerSettings({
             Dark
           </button>
         </div>
+      </div>
+
+      {/* Size */}
+      <div className="mb-8">
+        <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
+          Size: {(size * 100).toFixed(0)}%
+        </label>
+        <input
+          type="range"
+          min="0.5"
+          max="2"
+          step="0.1"
+          value={size}
+          onChange={(e) => setSize(Number(e.target.value))}
+          className="w-full accent-black [&::-webkit-slider-runnable-track]:bg-black/10 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:mt-[-6px]"
+        />
+        <p className="text-xs text-black/30 mt-2">
+          요소 크기 조절 (50% ~ 200%)
+        </p>
       </div>
 
       {/* Width */}

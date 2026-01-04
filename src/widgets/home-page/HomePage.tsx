@@ -161,11 +161,13 @@ export function HomePage() {
                 animation={dividerConfig.animation}
                 width={dividerConfig.width}
                 theme={dividerConfig.theme}
+                size={dividerConfig.size}
                 setStyle={dividerConfig.setStyle}
                 setColor={dividerConfig.setColor}
                 setAnimation={dividerConfig.setAnimation}
                 setWidth={dividerConfig.setWidth}
                 setTheme={dividerConfig.setTheme}
+                setSize={dividerConfig.setSize}
               />
             </>
           )}

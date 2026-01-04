@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const animation = searchParams.get('animation') !== 'false';
     const width = parseInt(searchParams.get('width') || '400');
     const theme = (searchParams.get('theme') as 'light' | 'dark') || 'light';
+    const size = parseFloat(searchParams.get('size') || '1.0');
 
     const svg = generateDividerSVG({
       style,
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
       animation,
       width,
       theme,
+      size,
     });
 
     return new NextResponse(svg, {

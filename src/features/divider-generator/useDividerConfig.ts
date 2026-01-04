@@ -11,11 +11,12 @@ export function useDividerConfig() {
   const [animation, setAnimation] = useState(true);
   const [width, setWidth] = useState(400);
   const [theme, setTheme] = useState<Theme>('light');
+  const [size, setSize] = useState(1.0);
   const [cacheKey, setCacheKey] = useState(0);
 
   useEffect(() => {
     setCacheKey(Date.now());
-  }, [style, color, animation, width, theme]);
+  }, [style, color, animation, width, theme, size]);
 
   const generateUrl = useCallback(() => {
     const params = new URLSearchParams();
@@ -24,9 +25,10 @@ export function useDividerConfig() {
     params.set('animation', animation.toString());
     params.set('width', width.toString());
     params.set('theme', theme);
+    params.set('size', size.toString());
 
     return `/api/divider?${params.toString()}`;
-  }, [style, color, animation, width, theme]);
+  }, [style, color, animation, width, theme, size]);
 
   const previewUrl = useMemo(() => {
     const generatedUrl = generateUrl();
@@ -39,11 +41,13 @@ export function useDividerConfig() {
     animation,
     width,
     theme,
+    size,
     setStyle,
     setColor,
     setAnimation,
     setWidth,
     setTheme,
+    setSize,
     previewUrl,
     generateUrl,
   };

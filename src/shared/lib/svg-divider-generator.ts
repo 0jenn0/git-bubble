@@ -4,6 +4,7 @@ export interface DividerParams {
   color?: string;
   animation?: boolean;
   theme?: 'light' | 'dark';
+  size?: number; // 0.5 ~ 2.0 scale factor
 }
 
 export function generateDividerSVG(params: DividerParams): string {
@@ -12,10 +13,12 @@ export function generateDividerSVG(params: DividerParams): string {
     style = 'dots',
     color = '#000000',
     animation = true,
-    theme = 'light'
+    theme = 'light',
+    size = 1.0
   } = params;
 
-  const height = 40;
+  const scale = Math.max(0.5, Math.min(2.0, size));
+  const height = Math.max(40, 40 * scale);
   const bgColor = theme === 'dark' ? '#1A1A1A' : 'transparent';
 
   // 스타일별 패턴 생성
@@ -48,33 +51,38 @@ export function generateDividerSVG(params: DividerParams): string {
   };
 
   const pattern = patterns[style] || patterns.dots;
-  const itemCount = Math.floor((width - 40) / pattern.spacing);
-  const startX = (width - (itemCount - 1) * pattern.spacing) / 2;
+  const scaledSpacing = pattern.spacing * scale;
+  const itemCount = Math.floor((width - 40) / scaledSpacing);
+  const startX = (width - (itemCount - 1) * scaledSpacing) / 2;
 
   // 각 아이템 생성 (SVG 네이티브 애니메이션 사용)
+  const baseY = height / 2;
+  const animationDistance = 4 * scale;
   const items = Array.from({ length: itemCount }, (_, i) => {
-    const x = startX + i * pattern.spacing;
-    const delay = (i * 0.1).toFixed(1);
+    const x = startX + i * scaledSpacing;
+    const delay = (i * 0.1).toFixed(2);
 
-    const animateElement = animation ? `
-      <animateTransform
-        attributeName="transform"
-        type="translate"
-        values="0,0; 0,-4; 0,0"
-        dur="1.5s"
-        begin="${delay}s"
-        repeatCount="indefinite"
-        calcMode="spline"
-        keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"
-      />
-    ` : '';
-
+    if (animation) {
+      return `
+      <g transform="translate(${x}, ${baseY})">
+        <g transform="scale(${scale})">
+          ${pattern.element}
+          <animateTransform
+            attributeName="transform"
+            type="translate"
+            values="0,0; 0,${-animationDistance / scale}; 0,0"
+            dur="1.2s"
+            begin="${delay}s"
+            repeatCount="indefinite"
+            additive="sum"
+          />
+        </g>
+      </g>`;
+    }
     return `
-      <g transform="translate(${x}, ${height / 2})">
+      <g transform="translate(${x}, ${baseY}) scale(${scale})">
         ${pattern.element}
-        ${animateElement}
-      </g>
-    `;
+      </g>`;
   }).join('');
 
   return `
