@@ -1,0 +1,50 @@
+'use client';
+
+import { useState, useEffect, useMemo, useCallback } from 'react';
+
+type DividerStyle = 'dots' | 'dashes' | 'stars' | 'hearts' | 'sparkles';
+type Theme = 'light' | 'dark';
+
+export function useDividerConfig() {
+  const [style, setStyle] = useState<DividerStyle>('dots');
+  const [color, setColor] = useState('#000000');
+  const [animation, setAnimation] = useState(true);
+  const [width, setWidth] = useState(400);
+  const [theme, setTheme] = useState<Theme>('light');
+  const [cacheKey, setCacheKey] = useState(0);
+
+  useEffect(() => {
+    setCacheKey(Date.now());
+  }, [style, color, animation, width, theme]);
+
+  const generateUrl = useCallback(() => {
+    const params = new URLSearchParams();
+    params.set('style', style);
+    params.set('color', color);
+    params.set('animation', animation.toString());
+    params.set('width', width.toString());
+    params.set('theme', theme);
+
+    return `/api/divider?${params.toString()}`;
+  }, [style, color, animation, width, theme]);
+
+  const previewUrl = useMemo(() => {
+    const generatedUrl = generateUrl();
+    return cacheKey ? `${generatedUrl}&_t=${cacheKey}` : generatedUrl;
+  }, [generateUrl, cacheKey]);
+
+  return {
+    style,
+    color,
+    animation,
+    width,
+    theme,
+    setStyle,
+    setColor,
+    setAnimation,
+    setWidth,
+    setTheme,
+    previewUrl,
+    generateUrl,
+  };
+}

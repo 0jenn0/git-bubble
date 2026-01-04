@@ -5,3 +5,5 @@ export { CopyButton } from './copy-button';
 export { HomePage } from './home-page';
 export { LinkSettings } from './link-settings';
 export { LinkPreview } from './link-preview';
+export { DividerSettings } from './divider-settings';
+export { DividerPreview } from './divider-preview';

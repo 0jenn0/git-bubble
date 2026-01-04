@@ -3,20 +3,24 @@
 import { useState } from 'react';
 import { useBubbleConfig } from '@/features/bubble-generator';
 import { useLinkConfig } from '@/features/link-generator';
+import { useDividerConfig } from '@/features/divider-generator';
 import { Header } from '@/widgets/header';
 import { BubblePreview } from '@/widgets/bubble-preview';
 import { BubbleSettings } from '@/widgets/bubble-settings';
 import { LinkPreview } from '@/widgets/link-preview';
 import { LinkSettings } from '@/widgets/link-settings';
+import { DividerPreview } from '@/widgets/divider-preview';
+import { DividerSettings } from '@/widgets/divider-settings';
 import { CopyButton } from '@/widgets/copy-button';
 
-type GeneratorTab = 'bubble' | 'link';
+type GeneratorTab = 'bubble' | 'link' | 'divider';
 
 export function HomePage() {
   const [activeTab, setActiveTab] = useState<GeneratorTab>('bubble');
 
   const bubbleConfig = useBubbleConfig();
   const linkConfig = useLinkConfig();
+  const dividerConfig = useDividerConfig();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -66,12 +70,32 @@ export function HomePage() {
                 링크 프리뷰
               </span>
             </button>
+            <button
+              onClick={() => setActiveTab('divider')}
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
+                activeTab === 'divider'
+                  ? 'bg-black text-white shadow-sm'
+                  : 'text-black/60 hover:text-black'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
+                  />
+                </svg>
+                디바이더
+              </span>
+            </button>
           </div>
         </div>
 
         {/* Tab Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
-          {activeTab === 'bubble' ? (
+          {activeTab === 'bubble' && (
             <>
               <BubblePreview
                 previewUrl={bubbleConfig.previewUrl}
@@ -101,7 +125,8 @@ export function HomePage() {
                 setFontSize={bubbleConfig.setFontSize}
               />
             </>
-          ) : (
+          )}
+          {activeTab === 'link' && (
             <>
               <LinkPreview
                 previewUrl={linkConfig.previewUrl}
@@ -127,18 +152,41 @@ export function HomePage() {
               />
             </>
           )}
+          {activeTab === 'divider' && (
+            <>
+              <DividerPreview previewUrl={dividerConfig.previewUrl} />
+              <DividerSettings
+                style={dividerConfig.style}
+                color={dividerConfig.color}
+                animation={dividerConfig.animation}
+                width={dividerConfig.width}
+                theme={dividerConfig.theme}
+                setStyle={dividerConfig.setStyle}
+                setColor={dividerConfig.setColor}
+                setAnimation={dividerConfig.setAnimation}
+                setWidth={dividerConfig.setWidth}
+                setTheme={dividerConfig.setTheme}
+              />
+            </>
+          )}
         </div>
       </div>
 
       <CopyButton
         generateUrl={
-          activeTab === 'bubble' ? bubbleConfig.generateUrl : linkConfig.generateUrl
+          activeTab === 'bubble'
+            ? bubbleConfig.generateUrl
+            : activeTab === 'link'
+            ? linkConfig.generateUrl
+            : dividerConfig.generateUrl
         }
-        mode={activeTab === 'bubble' ? bubbleConfig.mode : 'link'}
+        mode={activeTab === 'bubble' ? bubbleConfig.mode : activeTab}
         disabled={
           activeTab === 'bubble'
             ? !bubbleConfig.hasRequiredValues
-            : !linkConfig.hasRequiredValues
+            : activeTab === 'link'
+            ? !linkConfig.hasRequiredValues
+            : false
         }
         linkUrl={activeTab === 'link' ? linkConfig.url : undefined}
       />

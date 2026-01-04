@@ -1,0 +1,1 @@
+export { useDividerConfig } from './useDividerConfig';

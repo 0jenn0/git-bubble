@@ -1,0 +1,1 @@
+export { DividerSettings } from './DividerSettings';
