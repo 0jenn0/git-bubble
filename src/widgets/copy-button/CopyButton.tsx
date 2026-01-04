@@ -5,16 +5,26 @@ import { analytics } from '@/shared/lib/analytics';
 
 interface CopyButtonProps {
   generateUrl: () => string;
-  mode: 'tags' | 'text';
+  mode: string;
+  disabled?: boolean;
+  linkUrl?: string; // 링크 모드일 때 연결할 URL
 }
 
-export function CopyButton({ generateUrl, mode }: CopyButtonProps) {
+export function CopyButton({ generateUrl, mode, disabled, linkUrl }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = async () => {
+    if (disabled) return;
+
     const relativeUrl = generateUrl();
+    if (!relativeUrl) return;
+
     const absoluteUrl = `${window.location.origin}${relativeUrl}`;
-    const htmlCode = `<img src="${absoluteUrl}" />`;
+
+    // 링크 모드일 때는 a 태그로 감싸서 새 창에서 열리도록
+    const htmlCode = mode === 'link' && linkUrl
+      ? `<a href="${linkUrl}" target="_blank"><img src="${absoluteUrl}" /></a>`
+      : `<img src="${absoluteUrl}" />`;
 
     try {
       await navigator.clipboard.writeText(htmlCode);
@@ -33,8 +43,11 @@ export function CopyButton({ generateUrl, mode }: CopyButtonProps) {
           <div className="w-full max-w-md lg:max-w-xs">
             <button
               onClick={copyToClipboard}
+              disabled={disabled}
               className={`w-full px-6 py-4 rounded-[4px] text-sm md:text-base font-semibold transition-all ${
-                copied
+                disabled
+                  ? 'bg-black/10 text-black/30 cursor-not-allowed'
+                  : copied
                   ? 'bg-black/10 text-black/60'
                   : 'bg-black text-white hover:bg-black/90 active:scale-[0.98]'
               }`}

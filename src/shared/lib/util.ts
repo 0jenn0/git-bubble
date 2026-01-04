@@ -55,7 +55,7 @@ export function calculateTagWidth(text: string, fontSize: number): number {
     const direction = (directionParam === 'left' || directionParam === 'right') ? directionParam as 'left' | 'right' : undefined;
     const modeParam = searchParams.get('mode');
     const mode = (modeParam === 'text' ? 'text' : 'tags') as 'tags' | 'text';
-    
+    const thumbnail = searchParams.get('thumbnail') || undefined;
 
-    return { title, tags, url, theme, style, width, fontSize, animation, profileUrl, isOwn, direction, mode };
+    return { title, tags, url, theme, style, width, fontSize, animation, profileUrl, isOwn, direction, mode, thumbnail };
    }

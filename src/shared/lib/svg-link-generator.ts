@@ -5,6 +5,7 @@ export interface LinkPreviewParams {
   width?: number;
   theme?: 'light' | 'dark';
   style?: 'modern' | 'minimal' | 'card';
+  thumbnail?: string;
 }
 
 export interface LinkMetadata {
@@ -184,7 +185,8 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
     width = 280,
     theme = 'light',
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    style = 'modern'
+    style = 'modern',
+    thumbnail
   } = params;
 
   // 링크 메타데이터 가져오기
@@ -219,12 +221,13 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
   const thumbnailX = padding;
   const thumbnailY = padding;
   const lineHeight = 20;
-  
-  // 썸네일 이미지 처리
+
+  // 썸네일 이미지 처리 (커스텀 썸네일 우선)
   let thumbnailImage = '';
-  if (metadata.image) {
+  const imageUrl = thumbnail || metadata.image;
+  if (imageUrl) {
     try {
-      const base64Thumbnail = await fetchImageAsBase64(metadata.image);
+      const base64Thumbnail = await fetchImageAsBase64(imageUrl);
       if (base64Thumbnail) {
         thumbnailImage = base64Thumbnail;
       }
@@ -251,17 +254,24 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
   const titleLines = wrapText(metadata.title || '', safeTitleWidth, 16);
   const descriptionLines = wrapText(metadata.description || '', safeDescWidth, 11);
   
-  // 최대 2줄까지만 표시
-  const maxTitleLines = 2;
-  const maxDescLines = 2;
+  // 최대 줄 수 (썸네일 유무에 따라 다르게)
+  const maxTitleLines = hasThumbnail ? 2 : 3;
+  const maxDescLines = hasThumbnail ? 2 : 4;
   const displayTitleLines = titleLines.slice(0, maxTitleLines);
   const displayDescLines = descriptionLines.slice(0, maxDescLines);
-  
-  // 높이 계산 (동적으로 조정) - 높이 증가
+
+  // 높이 계산 (내용 기반 동적 계산)
+  const domainHeight = 22; // 도메인 + 파비콘 영역
   const titleHeight = displayTitleLines.length * lineHeight;
   const descHeight = displayDescLines.length * (lineHeight - 4);
-  const minHeight = padding + Math.max(thumbnailSize, titleHeight + descHeight + 40) + padding;
-  const height = Math.max(160, minHeight);
+  const contentTotalHeight = domainHeight + titleHeight + descHeight + 16; // 16은 요소 간 간격
+
+  // 썸네일이 있으면 썸네일 높이와 컨텐츠 높이 중 큰 값, 없으면 컨텐츠 높이만
+  const innerHeight = hasThumbnail
+    ? Math.max(thumbnailSize, contentTotalHeight)
+    : contentTotalHeight;
+
+  const height = padding * 2 + innerHeight;
   
   // 파비콘 처리 - fetchImageAsBase64를 사용하여 base64로 변환
   let faviconImage = '';
@@ -397,13 +407,24 @@ function generateFallbackLinkSVG(url: string, width: number, theme: 'light' | 'd
   const c = colors[theme];
   const urlObj = new URL(url);
   const domain = urlObj.hostname.replace(/^www\./, '');
-  const height = 140;
+
+  // 레이아웃 설정
+  const padding = 20;
   const thumbnailSize = 100;
   const thumbnailX = 20;
-  const thumbnailY = 20;
   const contentX = thumbnailX + thumbnailSize + 20;
   const borderRadius = 16;
   const shadowOffset = 2;
+
+  // 높이 계산 (콘텐츠 기반 동적 계산)
+  const domainHeight = 22;
+  const titleHeight = 24;
+  const descHeight = 16;
+  const contentSpacing = 16;
+  const contentTotalHeight = domainHeight + titleHeight + descHeight + contentSpacing;
+  const innerHeight = Math.max(thumbnailSize, contentTotalHeight);
+  const height = padding * 2 + innerHeight;
+  const thumbnailY = padding;
   
   return `
 <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">

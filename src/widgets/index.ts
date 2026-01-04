@@ -3,3 +3,5 @@ export { BubblePreview } from './bubble-preview';
 export { BubbleSettings } from './bubble-settings';
 export { CopyButton } from './copy-button';
 export { HomePage } from './home-page';
+export { LinkSettings } from './link-settings';
+export { LinkPreview } from './link-preview';
