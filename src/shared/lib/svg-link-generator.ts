@@ -279,6 +279,8 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
     ? Math.max(thumbnailSize, contentTotalHeight)
     : contentTotalHeight;
 
+  // 뱃지가 있을 때 추가 여백 (뱃지가 잘리지 않도록)
+  const badgePadding = badge ? 28 : 0;
   const height = padding * 2 + innerHeight;
   
   // 파비콘 처리 - fetchImageAsBase64를 사용하여 base64로 변환
@@ -325,7 +327,7 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
   const shadowOffset = 2;
 
   return `
-<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg width="${width + badgePadding}" height="${height + badgePadding}" viewBox="${-badgePadding} ${-badgePadding} ${width + badgePadding} ${height + badgePadding}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <!-- 그림자 필터 -->
     <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
@@ -403,7 +405,7 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
 
   <!-- 뱃지 (왼쪽 상단, pulse 애니메이션) -->
   ${badge ? `
-  <g transform="translate(${padding + 4}, ${padding + 4})">
+  <g transform="translate(${padding / 2}, ${padding / 2})">
     <circle cx="0" cy="0" r="22" fill="${badgeColor}">
       <animate attributeName="r" values="22;24;22" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
       <animate attributeName="opacity" values="1;0.8;1" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
@@ -416,7 +418,7 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
   </g>` : ''}
 
   <!-- 호버 효과 -->
-  <rect width="${width}" height="${height}" 
+  <rect x="0" y="0" width="${width}" height="${height}"
         fill="transparent" style="cursor: pointer;">
     <title>${metadata.title} - ${metadata.domain}</title>
   </rect>
@@ -472,11 +474,14 @@ function generateFallbackLinkSVG(
   const contentSpacing = 16;
   const contentTotalHeight = domainHeight + titleHeight + descHeight + contentSpacing;
   const innerHeight = Math.max(thumbnailSize, contentTotalHeight);
+
+  // 뱃지가 있을 때 추가 여백 (뱃지가 잘리지 않도록)
+  const badgePadding = badge ? 14 : 0;
   const height = padding * 2 + innerHeight;
   const thumbnailY = padding;
-  
+
   return `
-<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+<svg width="${width + badgePadding}" height="${height + badgePadding}" viewBox="${-badgePadding} ${-badgePadding} ${width + badgePadding} ${height + badgePadding}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <!-- 그림자 필터 -->
     <filter id="fallbackShadow" x="-50%" y="-50%" width="200%" height="200%">
@@ -531,7 +536,7 @@ function generateFallbackLinkSVG(
 
   <!-- 뱃지 (왼쪽 상단, pulse 애니메이션) -->
   ${badge ? `
-  <g transform="translate(${padding + 4}, ${padding + 4})">
+  <g transform="translate(${padding / 2}, ${padding / 2})">
     <circle cx="0" cy="0" r="22" fill="${badgeColor}">
       <animate attributeName="r" values="22;24;22" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
       <animate attributeName="opacity" values="1;0.8;1" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
@@ -540,7 +545,7 @@ function generateFallbackLinkSVG(
   </g>` : ''}
 
   <!-- 호버 효과 -->
-  <rect width="${width}" height="${height}"
+  <rect x="0" y="0" width="${width}" height="${height}"
         fill="transparent" style="cursor: pointer;">
     <title>링크 미리보기 - ${domain}</title>
   </rect>
