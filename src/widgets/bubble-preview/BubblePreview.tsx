@@ -1,5 +1,7 @@
 'use client';
 
+import { useLocale } from '@/shared/i18n';
+
 interface BubblePreviewProps {
   previewUrl: string;
   hasRequiredValues: boolean;
@@ -11,6 +13,8 @@ export function BubblePreview({
   hasRequiredValues,
   missingField,
 }: BubblePreviewProps) {
+  const { t } = useLocale();
+
   return (
     <div className="lg:order-2 lg:sticky lg:top-20 lg:h-[calc(100vh-8rem)] lg:overflow-y-auto">
       <div className="lg:h-full lg:flex lg:flex-col">
@@ -28,9 +32,9 @@ export function BubblePreview({
           ) : (
             <div className="text-center px-6">
               <p className="text-sm text-black/60 mb-1">
-                필수값 <span className="font-semibold">{missingField}</span>을
+                {t('missingValuePrefix')} <span className="font-semibold">{missingField}</span>
               </p>
-              <p className="text-sm text-black/60">넣어주세요!</p>
+              <p className="text-sm text-black/60">{t('missingValueSuffix')}</p>
             </div>
           )}
         </div>

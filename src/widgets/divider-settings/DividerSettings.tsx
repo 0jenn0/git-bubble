@@ -1,5 +1,7 @@
 'use client';
 
+import { useLocale } from '@/shared/i18n';
+
 type DividerStyle = 'dots' | 'dashes' | 'stars' | 'hearts' | 'sparkles';
 type Theme = 'light' | 'dark';
 
@@ -18,12 +20,12 @@ interface DividerSettingsProps {
   setSize: (size: number) => void;
 }
 
-const styleOptions: { value: DividerStyle; label: string; icon: string }[] = [
-  { value: 'dots', label: '도트', icon: '●●●' },
-  { value: 'dashes', label: '대시', icon: '———' },
-  { value: 'stars', label: '별', icon: '★★★' },
-  { value: 'hearts', label: '하트', icon: '♥♥♥' },
-  { value: 'sparkles', label: '스파클', icon: '✦✦✦' },
+const styleOptions: { value: DividerStyle; labelKey: 'dots' | 'dashes' | 'stars' | 'hearts' | 'sparkles'; icon: string }[] = [
+  { value: 'dots', labelKey: 'dots', icon: '●●●' },
+  { value: 'dashes', labelKey: 'dashes', icon: '———' },
+  { value: 'stars', labelKey: 'stars', icon: '★★★' },
+  { value: 'hearts', labelKey: 'hearts', icon: '♥♥♥' },
+  { value: 'sparkles', labelKey: 'sparkles', icon: '✦✦✦' },
 ];
 
 export function DividerSettings({
@@ -40,6 +42,8 @@ export function DividerSettings({
   setTheme,
   setSize,
 }: DividerSettingsProps) {
+  const { t } = useLocale();
+
   return (
     <div className="lg:order-1 lg:pr-6">
       <h2 className="text-xs font-semibold text-black/40 mb-8 uppercase tracking-widest">
@@ -63,7 +67,7 @@ export function DividerSettings({
               }`}
             >
               <div className="text-lg mb-1">{option.icon}</div>
-              <div className="text-[10px]">{option.label}</div>
+              <div className="text-[10px]">{t(option.labelKey)}</div>
             </button>
           ))}
         </div>
@@ -115,11 +119,11 @@ export function DividerSettings({
             />
           </button>
           <span className="text-sm text-black/60">
-            {animation ? '애니메이션 켜짐' : '애니메이션 꺼짐'}
+            {animation ? t('animationOn') : t('animationOff')}
           </span>
         </div>
         <p className="text-xs text-black/30 mt-2">
-          물결치듯 움직이는 귀여운 애니메이션 효과
+          {t('animationDescription')}
         </p>
       </div>
 
@@ -167,7 +171,7 @@ export function DividerSettings({
           className="w-full accent-black [&::-webkit-slider-runnable-track]:bg-black/10 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:mt-[-6px]"
         />
         <p className="text-xs text-black/30 mt-2">
-          요소 크기 조절 (50% ~ 200%)
+          {t('sizeLabel')}
         </p>
       </div>
 

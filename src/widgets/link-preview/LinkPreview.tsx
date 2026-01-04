@@ -1,11 +1,15 @@
 'use client';
 
+import { useLocale } from '@/shared/i18n';
+
 interface LinkPreviewProps {
   previewUrl: string;
   hasRequiredValues: boolean;
 }
 
 export function LinkPreview({ previewUrl, hasRequiredValues }: LinkPreviewProps) {
+  const { t } = useLocale();
+
   return (
     <div className="lg:order-2 lg:sticky lg:top-20 lg:h-[calc(100vh-8rem)] lg:overflow-y-auto">
       <div className="lg:h-full lg:flex lg:flex-col">
@@ -38,9 +42,9 @@ export function LinkPreview({ previewUrl, hasRequiredValues }: LinkPreviewProps)
                 </svg>
               </div>
               <p className="text-sm text-black/60 mb-1">
-                미리보기할 <span className="font-semibold">URL</span>을
+                {t('enterUrlPrefix')} <span className="font-semibold">URL</span>
               </p>
-              <p className="text-sm text-black/60">입력해주세요!</p>
+              <p className="text-sm text-black/60">{t('enterUrlSuffix')}</p>
             </div>
           )}
         </div>

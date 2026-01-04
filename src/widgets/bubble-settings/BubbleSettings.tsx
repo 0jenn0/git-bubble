@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { useImageUpload } from '@/features/image-upload';
 import { analytics } from '@/shared/lib/analytics';
+import { useLocale } from '@/shared/i18n';
 
 type Mode = 'tags' | 'text';
 type Theme = 'light' | 'dark';
@@ -57,6 +58,7 @@ export function BubbleSettings({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useImageUpload();
+  const { t } = useLocale();
 
   const handleFileSelect = async (file: File) => {
     try {
@@ -149,7 +151,7 @@ export function BubbleSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           Mode
           <span className="text-[10px] font-normal normal-case bg-black text-white px-1.5 py-0.5 rounded-[4px]">
-            필수
+            {t('required')}
           </span>
         </label>
         <div className="flex gap-2">
@@ -161,7 +163,7 @@ export function BubbleSettings({
                 : 'bg-black/5 text-black/60 hover:bg-black/10'
             }`}
           >
-            태그
+            {t('tags')}
           </button>
           <button
             onClick={() => handleModeChange('text')}
@@ -171,7 +173,7 @@ export function BubbleSettings({
                 : 'bg-black/5 text-black/60 hover:bg-black/10'
             }`}
           >
-            텍스트
+            {t('text')}
           </button>
         </div>
       </div>
@@ -182,34 +184,34 @@ export function BubbleSettings({
           <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
             Tags
             <span className="text-[10px] font-normal normal-case bg-black text-white px-1.5 py-0.5 rounded-[4px]">
-              필수
+              {t('required')}
             </span>
           </label>
           <input
             type="text"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            placeholder="태그1,태그2,태그3"
+            placeholder={t('tagsPlaceholder')}
             className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm transition-all"
           />
-          <p className="text-xs text-black/30 mt-2">쉼표로 구분</p>
+          <p className="text-xs text-black/30 mt-2">{t('tagsSeparator')}</p>
         </div>
       ) : (
         <div className="mb-8">
           <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
             Text
             <span className="text-[10px] font-normal normal-case bg-black text-white px-1.5 py-0.5 rounded-[4px]">
-              필수
+              {t('required')}
             </span>
           </label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="일반 텍스트를 입력하세요..."
+            placeholder={t('textPlaceholder')}
             rows={4}
             className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm resize-none transition-all"
           />
-          <p className="text-xs text-black/30 mt-2">자동으로 줄바꿈됩니다</p>
+          <p className="text-xs text-black/30 mt-2">{t('textAutoWrap')}</p>
         </div>
       )}
 
@@ -218,14 +220,14 @@ export function BubbleSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           Title
           <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">
-            선택
+            {t('optional')}
           </span>
         </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="제목 (선택사항)"
+          placeholder={t('titlePlaceholder')}
           className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm transition-all"
         />
       </div>
@@ -235,7 +237,7 @@ export function BubbleSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           Theme
           <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">
-            선택
+            {t('optional')}
           </span>
         </label>
         <div className="flex gap-2">
@@ -267,7 +269,7 @@ export function BubbleSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           Direction
           <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">
-            선택
+            {t('optional')}
           </span>
         </label>
         <div className="flex gap-2">
@@ -279,7 +281,7 @@ export function BubbleSettings({
                 : 'bg-black/5 text-black/60 hover:bg-black/10'
             }`}
           >
-            왼쪽
+            {t('left')}
           </button>
           <button
             onClick={() => handleDirectionChange('right')}
@@ -289,7 +291,7 @@ export function BubbleSettings({
                 : 'bg-black/5 text-black/60 hover:bg-black/10'
             }`}
           >
-            오른쪽
+            {t('right')}
           </button>
         </div>
       </div>
@@ -299,7 +301,7 @@ export function BubbleSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           Profile Image
           <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">
-            선택
+            {t('optional')}
           </span>
         </label>
 
@@ -323,7 +325,7 @@ export function BubbleSettings({
           {uploadMutation.isPending ? (
             <div className="flex flex-col items-center gap-2">
               <div className="w-6 h-6 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-              <p className="text-sm text-black/60">업로드 중...</p>
+              <p className="text-sm text-black/60">{t('uploading')}</p>
             </div>
           ) : profileUrl ? (
             <div className="flex items-center gap-3">
@@ -334,7 +336,7 @@ export function BubbleSettings({
               />
               <div className="flex-1 text-left">
                 <p className="text-sm text-black/80 truncate">{profileUrl.split('/').pop()}</p>
-                <p className="text-xs text-black/40">클릭하여 변경</p>
+                <p className="text-xs text-black/40">{t('clickToChange')}</p>
               </div>
             </div>
           ) : (
@@ -352,21 +354,21 @@ export function BubbleSettings({
                   d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
               </svg>
-              <p className="text-sm text-black/60">이미지를 드래그하거나 클릭하여 업로드</p>
-              <p className="text-xs text-black/30">JPG, PNG, GIF, WebP (최대 5MB)</p>
+              <p className="text-sm text-black/60">{t('dragOrClick')}</p>
+              <p className="text-xs text-black/30">{t('imageFormats')}</p>
             </div>
           )}
         </div>
 
         {uploadMutation.isError && (
           <p className="text-xs text-red-500 mb-2">
-            업로드 실패: {uploadMutation.error?.message}
+            {t('uploadFailed')}: {uploadMutation.error?.message}
           </p>
         )}
 
         <div className="flex items-center gap-2 text-xs text-black/40 mb-2">
           <div className="flex-1 h-px bg-black/10" />
-          <span>또는 URL 직접 입력</span>
+          <span>{t('orEnterUrl')}</span>
           <div className="flex-1 h-px bg-black/10" />
         </div>
         <input
@@ -383,7 +385,7 @@ export function BubbleSettings({
             onClick={() => setProfileUrl('')}
             className="mt-2 text-xs text-black/40 hover:text-black/60 transition-colors"
           >
-            이미지 제거
+            {t('removeImage')}
           </button>
         )}
       </div>
@@ -393,7 +395,7 @@ export function BubbleSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           Animation
           <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">
-            선택
+            {t('optional')}
           </span>
         </label>
         <select
@@ -401,7 +403,7 @@ export function BubbleSettings({
           onChange={(e) => handleAnimationChange(e.target.value as Animation)}
           className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm transition-all"
         >
-          <option value="none">없음</option>
+          <option value="none">{t('none')}</option>
           <option value="float">Float</option>
           <option value="pulse">Pulse</option>
         </select>
@@ -412,7 +414,7 @@ export function BubbleSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           Width: {width}px
           <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">
-            선택
+            {t('optional')}
           </span>
         </label>
         <input
@@ -433,7 +435,7 @@ export function BubbleSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           Font Size: {fontSize}px
           <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">
-            선택
+            {t('optional')}
           </span>
         </label>
         <input

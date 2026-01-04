@@ -1,10 +1,18 @@
 'use client';
 
+import { Languages } from 'lucide-react';
 import { analytics } from '@/shared/lib/analytics';
+import { useLocale } from '@/shared/i18n';
 
 export function Header() {
+  const { locale, setLocale } = useLocale();
+
   const handleGitHubStarClick = () => {
     analytics.clickGitHubStar();
+  };
+
+  const toggleLocale = () => {
+    setLocale(locale === 'ko' ? 'en' : 'ko');
   };
 
   return (
@@ -50,6 +58,13 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={toggleLocale}
+              className="flex items-center gap-1.5 px-3 py-2 bg-black/5 hover:bg-black/10 rounded-full text-sm font-medium transition-all"
+            >
+              <Languages className="w-4 h-4" />
+              {locale === 'ko' ? 'KO' : 'EN'}
+            </button>
             <a
               href="https://github.com/0jenn0/git-bubble"
               target="_blank"

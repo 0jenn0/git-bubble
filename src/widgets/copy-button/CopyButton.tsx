@@ -2,16 +2,18 @@
 
 import { useState } from 'react';
 import { analytics } from '@/shared/lib/analytics';
+import { useLocale } from '@/shared/i18n';
 
 interface CopyButtonProps {
   generateUrl: () => string;
   mode: string;
   disabled?: boolean;
-  linkUrl?: string; // 링크 모드일 때 연결할 URL
+  linkUrl?: string;
 }
 
 export function CopyButton({ generateUrl, mode, disabled, linkUrl }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
+  const { t } = useLocale();
 
   const copyToClipboard = async () => {
     if (disabled) return;
@@ -21,7 +23,6 @@ export function CopyButton({ generateUrl, mode, disabled, linkUrl }: CopyButtonP
 
     const absoluteUrl = `${window.location.origin}${relativeUrl}`;
 
-    // 링크 모드일 때는 a 태그로 감싸서 새 창에서 열리도록
     const htmlCode = mode === 'link' && linkUrl
       ? `<a href="${linkUrl}" target="_blank"><img src="${absoluteUrl}" /></a>`
       : `<img src="${absoluteUrl}" />`;
@@ -52,7 +53,7 @@ export function CopyButton({ generateUrl, mode, disabled, linkUrl }: CopyButtonP
                   : 'bg-black text-white hover:bg-black/90 active:scale-[0.98]'
               }`}
             >
-              {copied ? '✓ 복사됨' : '클립보드에 복사'}
+              {copied ? t('copied') : t('copyToClipboard')}
             </button>
           </div>
         </div>

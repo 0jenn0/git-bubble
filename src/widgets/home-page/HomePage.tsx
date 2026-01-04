@@ -12,11 +12,13 @@ import { LinkSettings } from '@/widgets/link-settings';
 import { DividerPreview } from '@/widgets/divider-preview';
 import { DividerSettings } from '@/widgets/divider-settings';
 import { CopyButton } from '@/widgets/copy-button';
+import { useLocale } from '@/shared/i18n';
 
 type GeneratorTab = 'bubble' | 'link' | 'divider';
 
 export function HomePage() {
   const [activeTab, setActiveTab] = useState<GeneratorTab>('bubble');
+  const { t } = useLocale();
 
   const bubbleConfig = useBubbleConfig();
   const linkConfig = useLinkConfig();
@@ -47,7 +49,7 @@ export function HomePage() {
                     d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                   />
                 </svg>
-                말풍선
+                {t('bubble')}
               </span>
             </button>
             <button
@@ -67,7 +69,7 @@ export function HomePage() {
                     d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                   />
                 </svg>
-                링크 프리뷰
+                {t('linkPreview')}
               </span>
             </button>
             <button
@@ -87,7 +89,7 @@ export function HomePage() {
                     d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
                   />
                 </svg>
-                디바이더
+                {t('divider')}
               </span>
             </button>
           </div>

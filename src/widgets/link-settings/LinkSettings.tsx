@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { useImageUpload } from '@/features/image-upload';
 import { analytics } from '@/shared/lib/analytics';
+import { useLocale } from '@/shared/i18n';
 
 type Theme = 'light' | 'dark';
 
@@ -49,6 +50,7 @@ export function LinkSettings({
   const badgeFileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useImageUpload();
   const badgeUploadMutation = useImageUpload();
+  const { t } = useLocale();
 
   const handleFileSelect = async (file: File) => {
     try {
@@ -140,7 +142,7 @@ export function LinkSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           URL
           <span className="text-[10px] font-normal normal-case bg-black text-white px-1.5 py-0.5 rounded-[4px]">
-            필수
+            {t('required')}
           </span>
         </label>
         <input
@@ -151,7 +153,7 @@ export function LinkSettings({
           className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm transition-all"
         />
         <p className="text-xs text-black/30 mt-2">
-          미리보기할 웹사이트 URL을 입력하세요
+          {t('enterUrlHint')}
         </p>
       </div>
 
@@ -160,7 +162,7 @@ export function LinkSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           Theme
           <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">
-            선택
+            {t('optional')}
           </span>
         </label>
         <div className="flex gap-2">
@@ -192,7 +194,7 @@ export function LinkSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           Width: {width}px
           <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">
-            선택
+            {t('optional')}
           </span>
         </label>
         <input
@@ -213,14 +215,13 @@ export function LinkSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           Custom Thumbnail
           <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">
-            선택
+            {t('optional')}
           </span>
         </label>
 
         <div className="bg-black/5 rounded-lg p-4 mb-4">
           <p className="text-xs text-black/60 leading-relaxed">
-            <span className="font-semibold">썸네일이 없는 경우:</span> 웹사이트에 OG 이미지가 없으면 썸네일 영역이 비어있게 됩니다.
-            원하는 이미지를 직접 업로드하여 사용할 수 있습니다.
+            {t('thumbnailHint')}
           </p>
         </div>
 
@@ -244,7 +245,7 @@ export function LinkSettings({
           {uploadMutation.isPending ? (
             <div className="flex flex-col items-center gap-2">
               <div className="w-6 h-6 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-              <p className="text-sm text-black/60">업로드 중...</p>
+              <p className="text-sm text-black/60">{t('uploading')}</p>
             </div>
           ) : customThumbnail ? (
             <div className="flex items-center gap-3">
@@ -257,7 +258,7 @@ export function LinkSettings({
                 <p className="text-sm text-black/80 truncate">
                   {customThumbnail.split('/').pop()}
                 </p>
-                <p className="text-xs text-black/40">클릭하여 변경</p>
+                <p className="text-xs text-black/40">{t('clickToChange')}</p>
               </div>
             </div>
           ) : (
@@ -276,7 +277,7 @@ export function LinkSettings({
                 />
               </svg>
               <p className="text-sm text-black/60">
-                커스텀 썸네일 업로드 (선택)
+                {t('customThumbnailUpload')}
               </p>
               <p className="text-xs text-black/30">JPG, PNG, GIF, WebP</p>
             </div>
@@ -285,7 +286,7 @@ export function LinkSettings({
 
         {uploadMutation.isError && (
           <p className="text-xs text-red-500 mb-2">
-            업로드 실패: {uploadMutation.error?.message}
+            {t('uploadFailed')}: {uploadMutation.error?.message}
           </p>
         )}
 
@@ -294,7 +295,7 @@ export function LinkSettings({
             onClick={() => setCustomThumbnail('')}
             className="text-xs text-black/40 hover:text-black/60 transition-colors"
           >
-            썸네일 제거
+            {t('removeThumbnail')}
           </button>
         )}
       </div>
@@ -304,7 +305,7 @@ export function LinkSettings({
         <label className="flex items-center gap-2 text-xs font-medium text-black/40 mb-3 uppercase tracking-widest">
           Badge
           <span className="text-[10px] font-normal normal-case bg-black/10 text-black/40 px-1.5 py-0.5 rounded-[4px]">
-            선택
+            {t('optional')}
           </span>
         </label>
 
@@ -323,7 +324,7 @@ export function LinkSettings({
             />
           </button>
           <span className="text-sm text-black/60">
-            {badgeEnabled ? '뱃지 활성화' : '뱃지 비활성화'}
+            {badgeEnabled ? t('badgeEnabled') : t('badgeDisabled')}
           </span>
         </div>
 
@@ -331,7 +332,7 @@ export function LinkSettings({
           <div className="space-y-4 pl-4 border-l-2 border-black/10">
             {/* Badge Text */}
             <div>
-              <label className="block text-xs text-black/40 mb-2">뱃지 텍스트</label>
+              <label className="block text-xs text-black/40 mb-2">{t('badgeText')}</label>
               <input
                 type="text"
                 value={badgeText}
@@ -341,13 +342,13 @@ export function LinkSettings({
                 className="w-full px-3 py-2 bg-black/5 rounded-[4px] text-sm focus:outline-none focus:ring-1 focus:ring-black/20"
               />
               <p className="text-xs text-black/30 mt-1">
-                이미지가 없을 때 표시됩니다 (최대 10자)
+                {t('badgeTextHint')}
               </p>
             </div>
 
             {/* Badge Color */}
             <div>
-              <label className="block text-xs text-black/40 mb-2">뱃지 색상</label>
+              <label className="block text-xs text-black/40 mb-2">{t('badgeColor')}</label>
               <div className="flex items-center gap-3">
                 <input
                   type="color"
@@ -372,7 +373,7 @@ export function LinkSettings({
 
             {/* Badge Image */}
             <div>
-              <label className="block text-xs text-black/40 mb-2">뱃지 이미지 (선택)</label>
+              <label className="block text-xs text-black/40 mb-2">{t('badgeImage')}</label>
               <div
                 onDrop={handleBadgeDrop}
                 onDragOver={(e) => { e.preventDefault(); setIsBadgeDragging(true); }}
@@ -393,7 +394,7 @@ export function LinkSettings({
                 {badgeUploadMutation.isPending ? (
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                    <p className="text-sm text-black/60">업로드 중...</p>
+                    <p className="text-sm text-black/60">{t('uploading')}</p>
                   </div>
                 ) : badgeImage ? (
                   <div className="flex items-center gap-3">
@@ -406,12 +407,12 @@ export function LinkSettings({
                       <p className="text-xs text-black/80 truncate">
                         {badgeImage.split('/').pop()}
                       </p>
-                      <p className="text-xs text-black/40">클릭하여 변경</p>
+                      <p className="text-xs text-black/40">{t('clickToChange')}</p>
                     </div>
                   </div>
                 ) : (
                   <p className="text-xs text-black/40">
-                    뱃지 이미지 업로드 (선택)
+                    {t('badgeImageUpload')}
                   </p>
                 )}
               </div>
@@ -421,14 +422,14 @@ export function LinkSettings({
                   onClick={() => setBadgeImage('')}
                   className="text-xs text-black/40 hover:text-black/60 transition-colors mt-2"
                 >
-                  이미지 제거
+                  {t('removeImage')}
                 </button>
               )}
             </div>
 
             <div className="bg-black/5 rounded-lg p-3">
               <p className="text-xs text-black/60 leading-relaxed">
-                뱃지는 링크 프리뷰 왼쪽 상단에 펄스 애니메이션과 함께 표시됩니다.
+                {t('badgeDescription')}
               </p>
             </div>
           </div>
