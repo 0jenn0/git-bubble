@@ -1,14 +1,17 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import { Providers } from '@/lib/providers';
 
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+
 export const metadata: Metadata = {
-  title: 'BubbleTag - MZ 개발자 말풍선 생성기',
+  title: 'git bubble - GitHub README 말풍선 생성기',
   description: 'GitHub README에서 URL 하나로 예쁜 말풍선 프로필을 만들 수 있는 서비스',
-  keywords: ['github', 'profile', 'svg', 'bubble', '개발자', 'MZ'],
-  authors: [{ name: 'Your Name' }],
+  keywords: ['github', 'profile', 'svg', 'bubble', '개발자', 'readme'],
+  authors: [{ name: '0jenn0' }],
   openGraph: {
-    title: 'BubbleTag - MZ 개발자 말풍선 생성기',
+    title: 'git bubble - GitHub README 말풍선 생성기',
     description: 'GitHub README에서 URL 하나로 예쁜 말풍선 프로필을 만들 수 있는 서비스',
     type: 'website',
   },
@@ -21,6 +24,24 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
+      <head>
+        {GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_ID}');
+              `}
+            </Script>
+          </>
+        )}
+      </head>
       <body>
         <Providers>{children}</Providers>
       </body>

@@ -2,8 +2,25 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useImageUpload } from '@/hooks/useImageUpload';
+import { supabase } from '@/lib/supabase';
 
 export default function Home() {
+  const [visitorCount, setVisitorCount] = useState<number | null>(null);
+
+  // 방문자 카운터
+  useEffect(() => {
+    const trackVisitor = async () => {
+      try {
+        const { data, error } = await supabase.rpc('increment_visitor');
+        if (!error && data) {
+          setVisitorCount(data);
+        }
+      } catch (err) {
+        console.error('Failed to track visitor:', err);
+      }
+    };
+    trackVisitor();
+  }, []);
   // URL 파라미터에서 초기값 읽기
   const getInitialValue = (key: string, defaultValue: string) => {
     if (typeof window === 'undefined') return defaultValue;
@@ -74,7 +91,6 @@ export default function Home() {
     const params = new URLSearchParams();
     params.set('tags', mode === 'tags' ? tags : text);
     params.set('mode', mode);
-    // title이 있을 때만 추가
     if (title) params.set('title', title);
     params.set('theme', theme);
     params.set('direction', direction);
@@ -83,25 +99,15 @@ export default function Home() {
     params.set('width', width.toString());
     params.set('fontSize', fontSize.toString());
 
-    // 개발 중에는 항상 현재 origin 사용 (로컬 API 호출)
-    const baseUrl = (typeof window !== 'undefined' ? window.location.origin : '');
-    const url = `${baseUrl}/api/bubble?${params.toString()}`;
-
-    // 디버깅: 생성된 URL 확인 (전체 URL 출력)
-    console.log('[generateUrl] 🔵 URL 생성:', {
-      mode,
-      direction,
-      theme,
-      tags: mode === 'tags' ? tags : text,
-      fullUrl: url
-    });
-
-    return url;
+    // 상대 경로 사용 (hydration 에러 방지)
+    return `/api/bubble?${params.toString()}`;
   }, [mode, tags, text, title, theme, direction, profileUrl, animation, width, fontSize]);
 
   const copyToClipboard = async () => {
-    const url = generateUrl();
-    const htmlCode = `<img src="${url}" />`;
+    const relativeUrl = generateUrl();
+    // 클립보드 복사 시에는 절대 URL 사용
+    const absoluteUrl = `${window.location.origin}${relativeUrl}`;
+    const htmlCode = `<img src="${absoluteUrl}" />`;
 
     try {
       await navigator.clipboard.writeText(htmlCode);
@@ -153,15 +159,20 @@ export default function Home() {
   // 필수값 체크
   const hasRequiredValues = mode === 'tags' ? tags.trim().length > 0 : text.trim().length > 0;
   const missingField = mode === 'tags' ? 'Tags' : 'Text';
-  
-  // previewUrl을 useMemo로 감싸서 mode, tags, text 등이 변경될 때마다 재계산
-  // preview용 URL에는 캐시 버스터를 추가하여 브라우저 캐시 방지
+
+  // 캐시 버스터용 타임스탬프 (클라이언트에서만)
+  const [cacheKey, setCacheKey] = useState(0);
+
+  // 설정 변경 시 캐시 키 업데이트
+  useEffect(() => {
+    setCacheKey(Date.now());
+  }, [mode, tags, text, title, theme, direction, profileUrl, animation, width, fontSize]);
+
+  // previewUrl 생성
   const previewUrl = useMemo(() => {
     const url = generateUrl();
-    const finalUrl = `${url}&_t=${Date.now()}`;
-    console.log('[previewUrl] 🟢 Preview URL 생성:', finalUrl);
-    return finalUrl;
-  }, [generateUrl]);
+    return cacheKey ? `${url}&_t=${cacheKey}` : url;
+  }, [generateUrl, cacheKey]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -198,25 +209,37 @@ export default function Home() {
             </svg>
           </div>
 
-          {/* GitHub Star 링크 */}
-          <a
-            href="https://github.com/0jenn0/git-bubble"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-5 py-2.5 bg-black hover:bg-black/80 rounded-full transition-all hover:scale-105 active:scale-95"
-          >
-            <span className="text-lg animate-bounce">⭐</span>
-            <svg
-              className="w-5 h-5 text-white"
-              fill="currentColor"
-              viewBox="0 0 24 24"
+          <div className="flex items-center gap-3">
+            {/* 누적 방문자 수 */}
+            {visitorCount !== null && (
+              <div className="flex items-center gap-1.5 px-3 py-2 bg-black/5 rounded-full">
+                <span className="text-sm">👀</span>
+                <span className="text-sm font-medium text-black/70">
+                  {visitorCount.toLocaleString()}
+                </span>
+              </div>
+            )}
+
+            {/* GitHub Star 링크 */}
+            <a
+              href="https://github.com/0jenn0/git-bubble"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-5 py-2.5 bg-black hover:bg-black/80 rounded-full transition-all hover:scale-105 active:scale-95"
             >
-              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-            </svg>
-            <span className="text-sm font-bold text-white">
-              Star
-            </span>
-          </a>
+              <span className="text-lg animate-bounce">⭐</span>
+              <svg
+                className="w-5 h-5 text-white"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+              </svg>
+              <span className="text-sm font-bold text-white">
+                Star
+              </span>
+            </a>
+          </div>
         </div>
       </div>
 
