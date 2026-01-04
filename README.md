@@ -16,8 +16,4 @@
 
 [**https://git-bubble.vercel.app**](https://git-bubble.vercel.app)에서 나만의 말풍선을 만들어보세요! 🤍
 
-<br />
-
-[![GitHub Stars](https://img.shields.io/github/stars/0jenn0/git-bubble?style=social)](https://github.com/0jenn0/git-bubble)
-
 </div>
