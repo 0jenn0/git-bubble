@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { SUPABASE_FUNCTION_URL } from '@/lib/supabase';
+import { SUPABASE_FUNCTION_URL } from '@/shared/lib/supabase';
 
 interface UploadResponse {
   success: boolean;

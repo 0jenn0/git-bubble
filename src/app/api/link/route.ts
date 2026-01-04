@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { parseParams } from '../../../lib/util';
-import { generateLinkPreviewSVG } from '@/lib/svg-link-generator';
+import { parseParams } from '@/shared/lib/util';
+import { generateLinkPreviewSVG } from '@/shared/lib/svg-link-generator';
 
 export async function GET(request: NextRequest) {
  try {

@@ -1,0 +1,1 @@
+export { useBubbleConfig } from './useBubbleConfig';

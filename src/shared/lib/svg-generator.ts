@@ -1,4 +1,4 @@
-import { BubbleParams } from '../type/bubble';
+import { BubbleParams } from '../types/bubble';
 import { themes } from './theme';
 import { calculateTagWidth, calculateTagLayout } from './util';
 

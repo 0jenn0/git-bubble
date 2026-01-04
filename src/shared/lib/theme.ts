@@ -1,4 +1,4 @@
-import { Theme, ThemeColors } from '../type/bubble';
+import { Theme, ThemeColors } from '../types/bubble';
 
 export const themes: Record<Theme, ThemeColors> = {
  light: {

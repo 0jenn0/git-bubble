@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateBubbleSVG } from '../../../lib/svg-generator';
-import { parseParams } from '../../../lib/util';
+import { generateBubbleSVG } from '@/shared/lib/svg-generator';
+import { parseParams } from '@/shared/lib/util';
 
 export async function GET(request: NextRequest) {
  try {

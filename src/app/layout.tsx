@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import './globals.css';
-import { Providers } from '@/lib/providers';
+import { Providers } from '@/shared/lib/providers';
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
