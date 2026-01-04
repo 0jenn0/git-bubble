@@ -1,9 +1,14 @@
 'use client';
 
 import { useVisitorCount } from '@/features/visitor-counter';
+import { analytics } from '@/shared/lib/analytics';
 
 export function Header() {
   const visitorCount = useVisitorCount();
+
+  const handleGitHubStarClick = () => {
+    analytics.clickGitHubStar();
+  };
 
   return (
     <header className="sticky top-0 z-30 backdrop-blur-xl bg-white/80 border-b border-black/5">
@@ -56,6 +61,7 @@ export function Header() {
               href="https://github.com/0jenn0/git-bubble"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={handleGitHubStarClick}
               className="flex items-center gap-2 px-5 py-2.5 bg-black hover:bg-black/80 rounded-full transition-all hover:scale-105 active:scale-95"
             >
               <span className="text-lg animate-bounce">⭐</span>

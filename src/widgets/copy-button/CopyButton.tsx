@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { analytics } from '@/shared/lib/analytics';
 
 interface CopyButtonProps {
   generateUrl: () => string;
+  mode: 'tags' | 'text';
 }
 
-export function CopyButton({ generateUrl }: CopyButtonProps) {
+export function CopyButton({ generateUrl, mode }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = async () => {
@@ -17,6 +19,7 @@ export function CopyButton({ generateUrl }: CopyButtonProps) {
     try {
       await navigator.clipboard.writeText(htmlCode);
       setCopied(true);
+      analytics.copyToClipboard(mode);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // ignore

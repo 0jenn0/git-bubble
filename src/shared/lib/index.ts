@@ -4,3 +4,4 @@ export { parseParams } from './util';
 export { generateBubbleSVG } from './svg-generator';
 export { generateLinkPreviewSVG } from './svg-link-generator';
 export { Providers } from './providers';
+export { analytics, trackEvent } from './analytics';

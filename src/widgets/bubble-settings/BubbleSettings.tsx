@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useImageUpload } from '@/features/image-upload';
+import { analytics } from '@/shared/lib/analytics';
 
 type Mode = 'tags' | 'text';
 type Theme = 'light' | 'dark';
@@ -62,9 +63,52 @@ export function BubbleSettings({
       const result = await uploadMutation.mutateAsync(file);
       if (result.publicUrl) {
         setProfileUrl(result.publicUrl);
+        analytics.uploadImage(true);
       }
     } catch {
-      // ignore
+      analytics.uploadImage(false);
+    }
+  };
+
+  const handleModeChange = (newMode: Mode) => {
+    setMode(newMode);
+    analytics.changeMode(newMode);
+  };
+
+  const handleThemeChange = (newTheme: Theme) => {
+    setTheme(newTheme);
+    analytics.changeTheme(newTheme);
+  };
+
+  const handleDirectionChange = (newDirection: Direction) => {
+    setDirection(newDirection);
+    analytics.changeDirection(newDirection);
+  };
+
+  const handleAnimationChange = (newAnimation: Animation) => {
+    setAnimation(newAnimation);
+    analytics.changeAnimation(newAnimation);
+  };
+
+  const handleWidthChange = (newWidth: number) => {
+    setWidth(newWidth);
+  };
+
+  const handleWidthChangeEnd = () => {
+    analytics.changeWidth(width);
+  };
+
+  const handleFontSizeChange = (newFontSize: number) => {
+    setFontSize(newFontSize);
+  };
+
+  const handleFontSizeChangeEnd = () => {
+    analytics.changeFontSize(fontSize);
+  };
+
+  const handleProfileUrlBlur = () => {
+    if (profileUrl) {
+      analytics.setProfileUrl();
     }
   };
 
@@ -110,7 +154,7 @@ export function BubbleSettings({
         </label>
         <div className="flex gap-2">
           <button
-            onClick={() => setMode('tags')}
+            onClick={() => handleModeChange('tags')}
             className={`flex-1 px-4 py-2.5 rounded-[4px] text-sm font-medium transition-all ${
               mode === 'tags'
                 ? 'bg-black text-white'
@@ -120,7 +164,7 @@ export function BubbleSettings({
             태그
           </button>
           <button
-            onClick={() => setMode('text')}
+            onClick={() => handleModeChange('text')}
             className={`flex-1 px-4 py-2.5 rounded-[4px] text-sm font-medium transition-all ${
               mode === 'text'
                 ? 'bg-black text-white'
@@ -196,7 +240,7 @@ export function BubbleSettings({
         </label>
         <div className="flex gap-2">
           <button
-            onClick={() => setTheme('light')}
+            onClick={() => handleThemeChange('light')}
             className={`flex-1 px-4 py-2.5 rounded-[4px] text-sm font-medium transition-all ${
               theme === 'light'
                 ? 'bg-black text-white'
@@ -206,7 +250,7 @@ export function BubbleSettings({
             Light
           </button>
           <button
-            onClick={() => setTheme('dark')}
+            onClick={() => handleThemeChange('dark')}
             className={`flex-1 px-4 py-2.5 rounded-[4px] text-sm font-medium transition-all ${
               theme === 'dark'
                 ? 'bg-black text-white'
@@ -228,7 +272,7 @@ export function BubbleSettings({
         </label>
         <div className="flex gap-2">
           <button
-            onClick={() => setDirection('left')}
+            onClick={() => handleDirectionChange('left')}
             className={`flex-1 px-4 py-2.5 rounded-[4px] text-sm font-medium transition-all ${
               direction === 'left'
                 ? 'bg-black text-white'
@@ -238,7 +282,7 @@ export function BubbleSettings({
             왼쪽
           </button>
           <button
-            onClick={() => setDirection('right')}
+            onClick={() => handleDirectionChange('right')}
             className={`flex-1 px-4 py-2.5 rounded-[4px] text-sm font-medium transition-all ${
               direction === 'right'
                 ? 'bg-black text-white'
@@ -329,6 +373,7 @@ export function BubbleSettings({
           type="text"
           value={profileUrl}
           onChange={(e) => setProfileUrl(e.target.value)}
+          onBlur={handleProfileUrlBlur}
           placeholder="https://..."
           className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm transition-all"
         />
@@ -353,7 +398,7 @@ export function BubbleSettings({
         </label>
         <select
           value={animation}
-          onChange={(e) => setAnimation(e.target.value as Animation)}
+          onChange={(e) => handleAnimationChange(e.target.value as Animation)}
           className="w-full px-0 py-3 bg-transparent border-b border-black/10 focus:outline-none focus:border-black text-sm transition-all"
         >
           <option value="none">없음</option>
@@ -376,7 +421,9 @@ export function BubbleSettings({
           max="600"
           step="20"
           value={width}
-          onChange={(e) => setWidth(Number(e.target.value))}
+          onChange={(e) => handleWidthChange(Number(e.target.value))}
+          onMouseUp={handleWidthChangeEnd}
+          onTouchEnd={handleWidthChangeEnd}
           className="w-full accent-black [&::-webkit-slider-runnable-track]:bg-black/10 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:mt-[-6px] [&::-moz-range-track]:bg-black/10 [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-0"
         />
       </div>
@@ -395,7 +442,9 @@ export function BubbleSettings({
           max="16"
           step="1"
           value={fontSize}
-          onChange={(e) => setFontSize(Number(e.target.value))}
+          onChange={(e) => handleFontSizeChange(Number(e.target.value))}
+          onMouseUp={handleFontSizeChangeEnd}
+          onTouchEnd={handleFontSizeChangeEnd}
           className="w-full accent-black [&::-webkit-slider-runnable-track]:bg-black/10 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:mt-[-6px] [&::-moz-range-track]:bg-black/10 [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-0"
         />
       </div>

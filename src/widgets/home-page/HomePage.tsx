@@ -71,7 +71,7 @@ export function HomePage() {
         </div>
       </div>
 
-      <CopyButton generateUrl={generateUrl} />
+      <CopyButton generateUrl={generateUrl} mode={mode} />
     </div>
   );
 }
