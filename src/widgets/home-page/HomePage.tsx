@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useBubbleConfig } from '@/features/bubble-generator';
 import { useLinkConfig } from '@/features/link-generator';
 import { useDividerConfig } from '@/features/divider-generator';
+import { useVillageConfig } from '@/features/village-generator';
 import { Header } from '@/widgets/header';
 import { BubblePreview } from '@/widgets/bubble-preview';
 import { BubbleSettings } from '@/widgets/bubble-settings';
@@ -11,10 +12,12 @@ import { LinkPreview } from '@/widgets/link-preview';
 import { LinkSettings } from '@/widgets/link-settings';
 import { DividerPreview } from '@/widgets/divider-preview';
 import { DividerSettings } from '@/widgets/divider-settings';
+import { VillagePreview } from '@/widgets/village-preview';
+import { VillageSettings } from '@/widgets/village-settings';
 import { CopyButton } from '@/widgets/copy-button';
 import { useLocale } from '@/shared/i18n';
 
-type GeneratorTab = 'bubble' | 'link' | 'divider';
+type GeneratorTab = 'bubble' | 'link' | 'divider' | 'village';
 
 export function HomePage() {
   const [activeTab, setActiveTab] = useState<GeneratorTab>('bubble');
@@ -23,6 +26,7 @@ export function HomePage() {
   const bubbleConfig = useBubbleConfig();
   const linkConfig = useLinkConfig();
   const dividerConfig = useDividerConfig();
+  const villageConfig = useVillageConfig();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -90,6 +94,26 @@ export function HomePage() {
                   />
                 </svg>
                 {t('divider')}
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('village')}
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
+                activeTab === 'village'
+                  ? 'bg-black text-white shadow-sm'
+                  : 'text-black/60 hover:text-black'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+                {t('village')}
               </span>
             </button>
           </div>
@@ -173,6 +197,24 @@ export function HomePage() {
               />
             </>
           )}
+          {activeTab === 'village' && (
+            <>
+              <VillagePreview
+                previewUrl={villageConfig.previewUrl}
+                hasRequiredValues={villageConfig.hasRequiredValues}
+              />
+              <VillageSettings
+                username={villageConfig.username}
+                width={villageConfig.width}
+                height={villageConfig.height}
+                theme={villageConfig.theme}
+                setUsername={villageConfig.setUsername}
+                setWidth={villageConfig.setWidth}
+                setHeight={villageConfig.setHeight}
+                setTheme={villageConfig.setTheme}
+              />
+            </>
+          )}
         </div>
       </div>
 
@@ -182,6 +224,8 @@ export function HomePage() {
             ? bubbleConfig.generateUrl
             : activeTab === 'link'
             ? linkConfig.generateUrl
+            : activeTab === 'village'
+            ? villageConfig.generateUrl
             : dividerConfig.generateUrl
         }
         mode={activeTab === 'bubble' ? bubbleConfig.mode : activeTab}
@@ -190,6 +234,8 @@ export function HomePage() {
             ? !bubbleConfig.hasRequiredValues
             : activeTab === 'link'
             ? !linkConfig.hasRequiredValues
+            : activeTab === 'village'
+            ? !villageConfig.hasRequiredValues
             : false
         }
         linkUrl={activeTab === 'link' ? linkConfig.url : undefined}

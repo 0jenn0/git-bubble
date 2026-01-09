@@ -7,3 +7,5 @@ export { LinkSettings } from './link-settings';
 export { LinkPreview } from './link-preview';
 export { DividerSettings } from './divider-settings';
 export { DividerPreview } from './divider-preview';
+export { VillageSettings } from './village-settings';
+export { VillagePreview } from './village-preview';

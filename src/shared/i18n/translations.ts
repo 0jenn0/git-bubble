@@ -8,6 +8,7 @@ export const translations = {
     bubble: '말풍선',
     linkPreview: '링크 프리뷰',
     divider: '디바이더',
+    village: '마을',
 
     // Mode
     tags: '태그',
@@ -75,6 +76,24 @@ export const translations = {
     // Copy Button
     copied: '✓ 복사됨',
     copyToClipboard: '클립보드에 복사',
+
+    // Village
+    villageSettings: '마을 설정',
+    githubUsername: 'GitHub 유저네임',
+    villageUsernameDescription: '커밋 수에 따라 캐릭터가 생성됩니다 (100커밋당 1캐릭터, 최대 12마리)',
+    villageDescription: '커밋할수록 마을에 주민이 늘어나요! 캐릭터들이 마을을 돌아다니며 대화해요.',
+    villageInfo: '마을 정보',
+    villageInfoCommits: '100커밋마다 새로운 캐릭터가 추가됩니다',
+    villageInfoPersist: '캐릭터는 저장되어 새로고침해도 유지됩니다',
+    villageInfoSpeech: '캐릭터마다 고유한 말버릇이 있어요',
+    enterUsername: 'GitHub 유저네임을 입력해주세요',
+    width: '너비',
+    height: '높이',
+
+    // Character Guide
+    characterGuide: '캐릭터 도감',
+    characterGuideDescription: '마을에 등장하는 12종류의 캐릭터들이에요',
+    catchphrase: '말버릇',
   },
   en: {
     // Common
@@ -85,6 +104,7 @@ export const translations = {
     bubble: 'Bubble',
     linkPreview: 'Link Preview',
     divider: 'Divider',
+    village: 'Village',
 
     // Mode
     tags: 'Tags',
@@ -152,6 +172,24 @@ export const translations = {
     // Copy Button
     copied: '✓ Copied',
     copyToClipboard: 'Copy to clipboard',
+
+    // Village
+    villageSettings: 'Village Settings',
+    githubUsername: 'GitHub Username',
+    villageUsernameDescription: 'Characters are generated based on commits (1 character per 100 commits, max 12)',
+    villageDescription: 'More commits, more villagers! Characters roam around and chat.',
+    villageInfo: 'Village Info',
+    villageInfoCommits: 'A new character is added for every 100 commits',
+    villageInfoPersist: 'Characters are saved and persist across refreshes',
+    villageInfoSpeech: 'Each character has a unique catchphrase',
+    enterUsername: 'Please enter your GitHub username',
+    width: 'Width',
+    height: 'Height',
+
+    // Character Guide
+    characterGuide: 'Character Guide',
+    characterGuideDescription: '12 types of characters that appear in your village',
+    catchphrase: 'Catchphrase',
   },
 } as const;
 

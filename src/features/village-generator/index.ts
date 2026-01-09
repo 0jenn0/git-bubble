@@ -1,0 +1,1 @@
+export { useVillageConfig } from './useVillageConfig';
