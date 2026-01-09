@@ -9,67 +9,90 @@ import {
 } from '@/shared/lib/svg-village-generator';
 
 
-// GitHub 레포지토리별 최근 커밋 수 조회
-async function fetchRepoCommits(username: string): Promise<RepoData[]> {
+// GitHub 올해 총 커밋 수 조회 (GraphQL API 사용)
+async function fetchYearlyCommits(username: string): Promise<{ repos: RepoData[]; totalCommits: number }> {
   try {
-    // 1. 유저의 레포지토리 목록 가져오기
-    const reposResponse = await fetch(
-      `https://api.github.com/users/${username}/repos?sort=pushed&per_page=10`,
-      {
-        headers: {
-          Accept: 'application/vnd.github.v3+json',
-          ...(process.env.GITHUB_TOKEN && {
-            Authorization: `token ${process.env.GITHUB_TOKEN}`,
-          }),
-        },
-      }
-    );
+    const currentYear = new Date().getFullYear();
+    const startOfYear = `${currentYear}-01-01T00:00:00Z`;
 
-    if (!reposResponse.ok) {
-      console.warn(`GitHub API error: ${reposResponse.status}`);
-      return [];
-    }
-
-    const repos = await reposResponse.json();
-
-    // 2. 각 레포의 최근 30일 커밋 수 가져오기
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const since = thirtyDaysAgo.toISOString();
-
-    const repoDataPromises = repos.slice(0, 6).map(async (repo: { name: string; full_name: string }) => {
-      try {
-        const commitsResponse = await fetch(
-          `https://api.github.com/repos/${repo.full_name}/commits?since=${since}&per_page=100`,
-          {
-            headers: {
-              Accept: 'application/vnd.github.v3+json',
-              ...(process.env.GITHUB_TOKEN && {
-                Authorization: `token ${process.env.GITHUB_TOKEN}`,
-              }),
-            },
+    // GraphQL로 올해 contribution 수 조회
+    const query = `
+      query($username: String!) {
+        user(login: $username) {
+          contributionsCollection(from: "${startOfYear}") {
+            totalCommitContributions
+            contributionCalendar {
+              totalContributions
+            }
           }
-        );
-
-        if (!commitsResponse.ok) {
-          return { name: repo.name, recentCommits: 0 };
+          repositories(first: 10, orderBy: {field: PUSHED_AT, direction: DESC}) {
+            nodes {
+              name
+              defaultBranchRef {
+                target {
+                  ... on Commit {
+                    history(since: "${startOfYear}") {
+                      totalCount
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
-
-        const commits = await commitsResponse.json();
-        return {
-          name: repo.name,
-          recentCommits: Array.isArray(commits) ? commits.length : 0,
-        };
-      } catch {
-        return { name: repo.name, recentCommits: 0 };
       }
+    `;
+
+    const response = await fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `bearer ${process.env.GITHUB_TOKEN}`,
+      },
+      body: JSON.stringify({ query, variables: { username } }),
     });
 
-    const repoData = await Promise.all(repoDataPromises);
-    return repoData.filter(r => r.recentCommits > 0 || repoData.indexOf(r) < 3);
+    if (!response.ok) {
+      console.warn(`GitHub GraphQL API error: ${response.status}`);
+      return { repos: [], totalCommits: 0 };
+    }
+
+    const data = await response.json();
+
+    if (data.errors || !data.data?.user) {
+      console.warn('GitHub GraphQL error:', data.errors);
+      return { repos: [], totalCommits: 0 };
+    }
+
+    const user = data.data.user;
+    const totalCommits = user.contributionsCollection.totalCommitContributions;
+
+    interface RepoNode {
+      name: string;
+      defaultBranchRef: {
+        target: {
+          history: {
+            totalCount: number;
+          };
+        };
+      } | null;
+    }
+
+    const repos: RepoData[] = user.repositories.nodes
+      .filter((repo: RepoNode) => {
+        const count = repo.defaultBranchRef?.target?.history?.totalCount;
+        return count !== undefined && count > 0;
+      })
+      .slice(0, 6)
+      .map((repo: RepoNode) => ({
+        name: repo.name,
+        recentCommits: repo.defaultBranchRef?.target?.history?.totalCount ?? 0,
+      }));
+
+    return { repos, totalCommits };
   } catch (error) {
-    console.error('Error fetching repo commits:', error);
-    return [];
+    console.error('Error fetching yearly commits:', error);
+    return { repos: [], totalCommits: 0 };
   }
 }
 
@@ -119,12 +142,11 @@ export async function GET(request: NextRequest) {
     const safeWidth = Math.min(Math.max(width, 300), 1200);
     const safeHeight = Math.min(Math.max(height, 100), 400);
 
-    // GitHub 레포지토리별 커밋 수 조회
-    const repos = await fetchRepoCommits(username);
-    const totalCommits = repos.reduce((sum, r) => sum + r.recentCommits, 0);
+    // GitHub 올해 커밋 수 조회
+    const { repos, totalCommits } = await fetchYearlyCommits(username);
 
-    // 캐릭터 수 계산 (10커밋당 1캐릭터, 최소 3, 최대 12)
-    const characterCount = Math.min(Math.max(Math.floor(totalCommits / 10) + 3, 3), 12);
+    // 캐릭터 수 계산 (100커밋당 1캐릭터, 최소 1, 최대 12)
+    const characterCount = Math.min(Math.max(Math.floor(totalCommits / 100), 1), 12);
     const selectedCharacters = selectCharactersForUser(username, characterCount);
 
     // 데이터 저장

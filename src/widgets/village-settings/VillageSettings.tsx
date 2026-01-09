@@ -133,9 +133,8 @@ export function VillageSettings({
       <div className="p-4 bg-black/5 rounded-lg">
         <h3 className="text-xs font-semibold text-black/60 mb-2">{t('villageInfo')}</h3>
         <ul className="text-xs text-black/40 space-y-1">
+          <li>{t('villageInfoYear')}</li>
           <li>{t('villageInfoCommits')}</li>
-          <li>{t('villageInfoPersist')}</li>
-          <li>{t('villageInfoSpeech')}</li>
         </ul>
       </div>
 
