@@ -20,33 +20,34 @@ export function generateDividerSVG(params: DividerParams): string {
   const scale = Math.max(0.5, Math.min(2.0, size));
   const height = Math.max(40, 40 * scale);
   const bgColor = theme === 'dark' ? '#1A1A1A' : 'transparent';
+  const strokeColor = theme === 'dark' ? '#888888' : '#222222';
 
-  // 스타일별 패턴 생성
+  // 굵은 도트 스타일 패턴 생성 (픽셀 아트 느낌)
   const patterns: Record<string, { element: string; spacing: number; size: number }> = {
     dots: {
-      element: `<circle cx="0" cy="0" r="3" fill="${color}"/>`,
-      spacing: 16,
-      size: 6
+      element: `<rect x="-4" y="-4" width="8" height="8" fill="${color}" stroke="${strokeColor}" stroke-width="2"/>`,
+      spacing: 20,
+      size: 8
     },
     dashes: {
-      element: `<rect x="-6" y="-2" width="12" height="4" rx="2" fill="${color}"/>`,
-      spacing: 24,
-      size: 12
+      element: `<rect x="-8" y="-3" width="16" height="6" fill="${color}" stroke="${strokeColor}" stroke-width="2"/>`,
+      spacing: 28,
+      size: 16
     },
     stars: {
-      element: `<path d="M0,-5 L1.5,-1.5 L5.5,-1.5 L2.5,1 L3.5,5 L0,2.5 L-3.5,5 L-2.5,1 L-5.5,-1.5 L-1.5,-1.5 Z" fill="${color}"/>`,
-      spacing: 28,
-      size: 11
+      element: `<path d="M0,-6 L2,-2 L6,-2 L3,1 L4,6 L0,3 L-4,6 L-3,1 L-6,-2 L-2,-2 Z" fill="${color}" stroke="${strokeColor}" stroke-width="2" stroke-linejoin="miter"/>`,
+      spacing: 32,
+      size: 12
     },
     hearts: {
-      element: `<path d="M0,3 C-5,-2 -5,-5 -2.5,-5 C0,-5 0,-2 0,-2 C0,-2 0,-5 2.5,-5 C5,-5 5,-2 0,3 Z" fill="${color}"/>`,
-      spacing: 24,
-      size: 10
-    },
-    sparkles: {
-      element: `<path d="M0,-6 L1,0 L0,6 L-1,0 Z M-4,-4 L0,1 L4,-4 L0,-1 Z" fill="${color}"/>`,
+      element: `<path d="M0,4 L-5,-1 L-5,-4 L-3,-6 L0,-3 L3,-6 L5,-4 L5,-1 Z" fill="${color}" stroke="${strokeColor}" stroke-width="2" stroke-linejoin="miter"/>`,
       spacing: 28,
       size: 12
+    },
+    sparkles: {
+      element: `<path d="M0,-7 L1.5,-1.5 L7,0 L1.5,1.5 L0,7 L-1.5,1.5 L-7,0 L-1.5,-1.5 Z" fill="${color}" stroke="${strokeColor}" stroke-width="2" stroke-linejoin="miter"/>`,
+      spacing: 32,
+      size: 14
     }
   };
 
@@ -86,7 +87,7 @@ export function generateDividerSVG(params: DividerParams): string {
   }).join('');
 
   return `
-<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated; image-rendering: crisp-edges;">
   <rect width="${width}" height="${height}" fill="${bgColor}"/>
   ${items}
 </svg>`.trim();

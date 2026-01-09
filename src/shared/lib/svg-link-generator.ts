@@ -322,27 +322,13 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
     }
   }
 
-  // 말풍선 스타일 디자인
-  const borderRadius = 16;
-  const shadowOffset = 2;
+  // 굵은 도트 스타일 디자인
+  const borderRadius = 0;
 
   return `
-<svg width="${width + badgePadding}" height="${height + badgePadding}" viewBox="${-badgePadding} ${-badgePadding} ${width + badgePadding} ${height + badgePadding}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg width="${width + badgePadding}" height="${height + badgePadding}" viewBox="${-badgePadding} ${-badgePadding} ${width + badgePadding} ${height + badgePadding}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="image-rendering: pixelated; image-rendering: crisp-edges;">
   <defs>
-    <!-- 그림자 필터 -->
-    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-      <feOffset dx="0" dy="${shadowOffset}" result="offsetblur"/>
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.1"/>
-      </feComponentTransfer>
-      <feMerge>
-        <feMergeNode/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-
-    <!-- 썸네일 클리핑 경로 (둥근 모서리) -->
+    <!-- 썸네일 클리핑 경로 (굵은 도트 스타일) -->
     <clipPath id="thumbnailClip">
       <rect x="${thumbnailX}" y="${thumbnailY}" width="${thumbnailSize}" height="${thumbnailSize}" rx="${borderRadius}" ry="${borderRadius}"/>
     </clipPath>
@@ -352,14 +338,18 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
       <circle cx="0" cy="0" r="22"/>
     </clipPath>
   </defs>
-  
-  <!-- 말풍선 배경 (둥근 모서리) -->
-  <rect x="${padding / 2}" y="${padding / 2}" width="${width - padding}" height="${height - padding}" 
-        rx="${borderRadius}" ry="${borderRadius}" 
-        fill="${c.bg}" 
-        stroke="${c.lightGray}" 
-        stroke-width="1"
-        filter="url(#shadow)"/>
+
+  <!-- 굵은 도트 스타일 그림자 -->
+  <rect x="${padding / 2 + 4}" y="${padding / 2 + 4}" width="${width - padding}" height="${height - padding}"
+        rx="${borderRadius}" ry="${borderRadius}"
+        fill="${theme === 'dark' ? '#000000' : '#888888'}" opacity="0.5"/>
+
+  <!-- 굵은 도트 스타일 배경 -->
+  <rect x="${padding / 2}" y="${padding / 2}" width="${width - padding}" height="${height - padding}"
+        rx="${borderRadius}" ry="${borderRadius}"
+        fill="${c.bg}"
+        stroke="${theme === 'dark' ? '#888888' : '#222222'}"
+        stroke-width="3"/>
   
   <!-- 썸네일 이미지 (왼쪽, 둥근 모서리) - 있을 때만 렌더링 -->
   ${hasThumbnail 
@@ -377,7 +367,7 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
     : ''}
   <text x="${contentX + (faviconImage ? 20 : 0)}" y="${padding + 22}" 
         fill="${c.gray}" 
-        font-family="Helvetica, Arial, sans-serif" 
+        font-family="monospace" 
         font-size="11" font-weight="500">${metadata.domain}</text>
   
   <!-- 제목 (여러 줄) -->
@@ -387,7 +377,7 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
     return `
   <text x="${contentX}" y="${padding + 44 + index * lineHeight}" 
         fill="${c.black}" 
-        font-family="Helvetica, Arial, sans-serif" 
+        font-family="monospace" 
         font-size="16" 
         font-weight="600">${displayLine}${showEllipsis ? '...' : ''}</text>`;
   }).join('')}
@@ -399,7 +389,7 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
     return `
   <text x="${contentX}" y="${padding + 44 + titleHeight + 8 + index * (lineHeight - 4)}"
         fill="${c.gray}"
-        font-family="Helvetica, Arial, sans-serif"
+        font-family="monospace"
         font-size="11">${displayLine}${showEllipsis ? '...' : ''}</text>`;
   }).join('')}
 
@@ -413,7 +403,7 @@ export async function generateLinkPreviewSVG(params: LinkPreviewParams): Promise
     ${badgeImageBase64
       ? `<clipPath id="badgeImgClip"><circle cx="0" cy="0" r="20"/></clipPath>
          <image x="-20" y="-20" width="40" height="40" href="${badgeImageBase64.replace(/"/g, '&quot;')}" clip-path="url(#badgeImgClip)" preserveAspectRatio="xMidYMid slice"/>`
-      : `<text x="0" y="5" fill="#FFFFFF" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">${badgeText}</text>`
+      : `<text x="0" y="5" fill="#FFFFFF" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle">${badgeText}</text>`
     }
   </g>` : ''}
 
@@ -459,13 +449,12 @@ function generateFallbackLinkSVG(
   const urlObj = new URL(url);
   const domain = urlObj.hostname.replace(/^www\./, '');
 
-  // 레이아웃 설정
+  // 레이아웃 설정 (굵은 도트 스타일)
   const padding = 20;
   const thumbnailSize = 100;
   const thumbnailX = 20;
   const contentX = thumbnailX + thumbnailSize + 20;
-  const borderRadius = 16;
-  const shadowOffset = 2;
+  const borderRadius = 0;
 
   // 높이 계산 (콘텐츠 기반 동적 계산)
   const domainHeight = 22;
@@ -481,57 +470,47 @@ function generateFallbackLinkSVG(
   const thumbnailY = padding;
 
   return `
-<svg width="${width + badgePadding}" height="${height + badgePadding}" viewBox="${-badgePadding} ${-badgePadding} ${width + badgePadding} ${height + badgePadding}" xmlns="http://www.w3.org/2000/svg">
+<svg width="${width + badgePadding}" height="${height + badgePadding}" viewBox="${-badgePadding} ${-badgePadding} ${width + badgePadding} ${height + badgePadding}" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated; image-rendering: crisp-edges;">
   <defs>
-    <!-- 그림자 필터 -->
-    <filter id="fallbackShadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-      <feOffset dx="0" dy="${shadowOffset}" result="offsetblur"/>
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.1"/>
-      </feComponentTransfer>
-      <feMerge>
-        <feMergeNode/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    
-    <!-- 썸네일 클리핑 경로 (둥근 모서리) -->
+    <!-- 썸네일 클리핑 경로 (굵은 도트 스타일) -->
     <clipPath id="fallbackThumbnailClip">
       <rect x="${thumbnailX}" y="${thumbnailY}" width="${thumbnailSize}" height="${thumbnailSize}" rx="${borderRadius}" ry="${borderRadius}"/>
     </clipPath>
-
   </defs>
-  
-  <!-- 말풍선 배경 (둥근 모서리) -->
-  <rect x="10" y="10" width="${width - 20}" height="${height - 20}" 
-        rx="${borderRadius}" ry="${borderRadius}" 
-        fill="${c.bg}" 
-        stroke="${c.lightGray}" 
-        stroke-width="1"
-        filter="url(#fallbackShadow)"/>
-  
-  <!-- 썸네일 플레이스홀더 (둥근 모서리) -->
-  <rect x="${thumbnailX}" y="${thumbnailY}" width="${thumbnailSize}" height="${thumbnailSize}" 
-        rx="${borderRadius}" ry="${borderRadius}" 
-        fill="${c.lightGray}"/>
+
+  <!-- 굵은 도트 스타일 그림자 -->
+  <rect x="14" y="14" width="${width - 20}" height="${height - 20}"
+        rx="${borderRadius}" ry="${borderRadius}"
+        fill="${theme === 'dark' ? '#000000' : '#888888'}" opacity="0.5"/>
+
+  <!-- 굵은 도트 스타일 배경 -->
+  <rect x="10" y="10" width="${width - 20}" height="${height - 20}"
+        rx="${borderRadius}" ry="${borderRadius}"
+        fill="${c.bg}"
+        stroke="${theme === 'dark' ? '#888888' : '#222222'}"
+        stroke-width="3"/>
+
+  <!-- 썸네일 플레이스홀더 (굵은 도트 스타일) -->
+  <rect x="${thumbnailX}" y="${thumbnailY}" width="${thumbnailSize}" height="${thumbnailSize}"
+        rx="${borderRadius}" ry="${borderRadius}"
+        fill="${c.lightGray}" stroke="${theme === 'dark' ? '#888888' : '#222222'}" stroke-width="2"/>
   
   <!-- 도메인 -->
   <text x="${contentX}" y="35" 
         fill="${c.gray}" 
-        font-family="Helvetica, Arial, sans-serif" 
+        font-family="monospace" 
         font-size="11" font-weight="500">${domain}</text>
   
   <!-- 제목 -->
   <text x="${contentX}" y="58" 
         fill="${c.black}" 
-        font-family="Helvetica, Arial, sans-serif" 
+        font-family="monospace" 
         font-size="16" font-weight="600">링크 미리보기</text>
   
   <!-- 설명 -->
   <text x="${contentX}" y="80"
         fill="${c.gray}"
-        font-family="Helvetica, Arial, sans-serif"
+        font-family="monospace"
         font-size="11">메타데이터를 불러올 수 없습니다</text>
 
   <!-- 뱃지 (왼쪽 상단, pulse 애니메이션) -->
@@ -541,7 +520,7 @@ function generateFallbackLinkSVG(
       <animate attributeName="r" values="22;24;22" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
       <animate attributeName="opacity" values="1;0.8;1" dur="1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
     </circle>
-    <text x="0" y="5" fill="#FFFFFF" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">${badgeText}</text>
+    <text x="0" y="5" fill="#FFFFFF" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle">${badgeText}</text>
   </g>` : ''}
 
   <!-- 호버 효과 -->

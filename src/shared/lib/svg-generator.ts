@@ -318,69 +318,58 @@ export async function generateBubbleSVG(params: BubbleParams): Promise<string> {
       <circle cx="${centerX}" cy="${centerY}" r="${profileSize/2}" 
               fill="${bgColor}" stroke="#ffffff" stroke-width="2" />
       <text x="${centerX}" y="${centerY + 6}" text-anchor="middle" 
-            fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" 
+            fill="#ffffff" font-family="monospace" 
             font-size="${Math.floor(profileSize/2.2)}" font-weight="600">${initial}</text>`;
   };
 
-  // 메신저 스타일 말풍선 배경 생성
+  // 도트 스타일 말풍선 배경 생성 (굵은 도트)
   const generateBubbleBackground = () => {
     const bubbleX = isRight ? 20 : bubbleMarginFromProfile;
     const bubbleY = (totalHeight - bubbleHeight) / 2 + 10;
     const bubbleWidth = isRight ? width - bubbleX - rightMargin : width - bubbleX - 20;
     const bubbleActualHeight = bubbleHeight - 20;
-    const radius = 20;
     const tailSize = 8;
     const tailY = bubbleY + bubbleActualHeight / 2;
 
     console.log('[generateBubbleBackground] 🔵 배경 생성:', { isRight, bubbleX, bubbleWidth });
 
-    // 메신저 스타일 말풍선 (왼쪽 또는 오른쪽)
+    // 굵은 도트 스타일 말풍선 (완전 직각)
     let bubblePath;
 
     if (isRight) {
       // 오른쪽 메시지 (꼬리 오른쪽)
       bubblePath = `
-        M${bubbleX + radius},${bubbleY}
-        L${bubbleX + bubbleWidth - radius},${bubbleY}
-        Q${bubbleX + bubbleWidth},${bubbleY} ${bubbleX + bubbleWidth},${bubbleY + radius}
+        M${bubbleX},${bubbleY}
+        L${bubbleX + bubbleWidth},${bubbleY}
         L${bubbleX + bubbleWidth},${tailY - tailSize}
         L${bubbleX + bubbleWidth + tailSize},${tailY}
         L${bubbleX + bubbleWidth},${tailY + tailSize}
-        L${bubbleX + bubbleWidth},${bubbleY + bubbleActualHeight - radius}
-        Q${bubbleX + bubbleWidth},${bubbleY + bubbleActualHeight} ${bubbleX + bubbleWidth - radius},${bubbleY + bubbleActualHeight}
-        L${bubbleX + radius},${bubbleY + bubbleActualHeight}
-        Q${bubbleX},${bubbleY + bubbleActualHeight} ${bubbleX},${bubbleY + bubbleActualHeight - radius}
-        L${bubbleX},${bubbleY + radius}
-        Q${bubbleX},${bubbleY} ${bubbleX + radius},${bubbleY}
+        L${bubbleX + bubbleWidth},${bubbleY + bubbleActualHeight}
+        L${bubbleX},${bubbleY + bubbleActualHeight}
         Z`;
     } else {
       // 상대방 메시지 (왼쪽, 꼬리 왼쪽)
       bubblePath = `
-        M${bubbleX + radius},${bubbleY}
-        L${bubbleX + bubbleWidth - radius},${bubbleY}
-        Q${bubbleX + bubbleWidth},${bubbleY} ${bubbleX + bubbleWidth},${bubbleY + radius}
-        L${bubbleX + bubbleWidth},${bubbleY + bubbleActualHeight - radius}
-        Q${bubbleX + bubbleWidth},${bubbleY + bubbleActualHeight} ${bubbleX + bubbleWidth - radius},${bubbleY + bubbleActualHeight}
-        L${bubbleX + radius},${bubbleY + bubbleActualHeight}
-        Q${bubbleX},${bubbleY + bubbleActualHeight} ${bubbleX},${bubbleY + bubbleActualHeight - radius}
+        M${bubbleX},${bubbleY}
+        L${bubbleX + bubbleWidth},${bubbleY}
+        L${bubbleX + bubbleWidth},${bubbleY + bubbleActualHeight}
+        L${bubbleX},${bubbleY + bubbleActualHeight}
         L${bubbleX},${tailY + tailSize}
         L${bubbleX - tailSize},${tailY}
         L${bubbleX},${tailY - tailSize}
-        L${bubbleX},${bubbleY + radius}
-        Q${bubbleX},${bubbleY} ${bubbleX + radius},${bubbleY}
         Z`;
     }
 
-    // 테마에 따라 색상 결정 (오른쪽/왼쪽 모두 동일)
+    // 테마에 따라 색상 결정 (굵은 도트 스타일)
     const fillColor = theme === 'dark' ? themeColors.primary : '#ffffff';
-    const strokeColor = theme === 'dark' ? 'none' : '#e0e0e0';
-    
+    const strokeColor = theme === 'dark' ? '#888888' : '#222222';
+
     return `
-      <path d="${bubblePath}" 
-            fill="${fillColor}" 
-            stroke="${strokeColor}" 
-            stroke-width="1" 
-            filter="url(#shadow)" />`;
+      <rect x="${bubbleX + 4}" y="${bubbleY + 4}" width="${bubbleWidth}" height="${bubbleActualHeight}" fill="${theme === 'dark' ? '#000000' : '#888888'}" opacity="0.5"/>
+      <path d="${bubblePath}"
+            fill="${fillColor}"
+            stroke="${strokeColor}"
+            stroke-width="3"/>`;
   };
 
   // 소제목 생성 (메신저 스타일)
@@ -398,7 +387,7 @@ export async function generateBubbleSVG(params: BubbleParams): Promise<string> {
     return `
       <text x="${textX}" y="${(totalHeight - bubbleHeight) / 2 + 30}"
             text-anchor="${textAnchor}"
-            fill="${textColor}" font-family="-apple-system, BlinkMacSystemFont, sans-serif"
+            fill="${textColor}" font-family="monospace"
             font-size="12" font-weight="800" opacity="0.8">${decodeURIComponent(title)}</text>`;
   };
 
@@ -427,7 +416,7 @@ export async function generateBubbleSVG(params: BubbleParams): Promise<string> {
         <text x="${textX}" y="${startY + index * lineHeight}"
               text-anchor="${textAnchor}"
               fill="${textColor}"
-              font-family="-apple-system, BlinkMacSystemFont, sans-serif"
+              font-family="monospace"
               font-size="${fontSize}"
               font-weight="400">${line}</text>
       `).join('');
@@ -448,16 +437,19 @@ export async function generateBubbleSVG(params: BubbleParams): Promise<string> {
           const textX = currentX + tagWidth / 2;
           const textY = currentY + 14;
 
-          // 메신저 스타일 태그 (더 모던하고 심플)
-          // 테마에 따라 태그 배경 결정 (오른쪽/왼쪽 모두 동일)
-          const tagBg = theme === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.05)';
-          
+          // 굵은 도트 스타일 태그 (픽셀 느낌)
+          // 테마에 따라 태그 배경 결정
+          const tagBg = theme === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)';
+          const tagBorder = theme === 'dark' ? '#888888' : '#222222';
+
           tagElements += `
-            <rect x="${currentX}" y="${currentY}" width="${tagWidth}" height="22" rx="11" 
-                  fill="${tagBg}" />
-            <text x="${textX}" y="${textY}" text-anchor="middle" fill="${textColor}" 
-                  font-family="-apple-system, BlinkMacSystemFont, sans-serif" 
-                  font-size="${fontSize}" font-weight="500">${tag}</text>`;
+            <rect x="${currentX + 2}" y="${currentY + 2}" width="${tagWidth}" height="22" rx="0"
+                  fill="${theme === 'dark' ? '#000000' : '#888888'}" opacity="0.4"/>
+            <rect x="${currentX}" y="${currentY}" width="${tagWidth}" height="22" rx="0"
+                  fill="${tagBg}" stroke="${tagBorder}" stroke-width="2"/>
+            <text x="${textX}" y="${textY}" text-anchor="middle" fill="${textColor}"
+                  font-family="monospace"
+                  font-size="${fontSize}" font-weight="700">${tag}</text>`;
 
           currentX += tagWidth + 6;
         });
@@ -467,26 +459,23 @@ export async function generateBubbleSVG(params: BubbleParams): Promise<string> {
     }
   };
 
-  // 필터 효과 생성 (메신저 스타일)
+  // 필터 효과 생성 (도트 스타일 - 필터 없음)
   const generateFilters = () => {
-    return `
-      <filter id="shadow">
-        <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.1"/>
-      </filter>`;
+    return '';
   };
 
   // 최종 SVG 생성
   const profilePicture = await generateProfilePicture();
   
   return `
-<svg width="${width}" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="http://www.w3.org/2000/svg">
+<svg width="${width}" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated; image-rendering: crisp-edges;">
   ${getAnimationCSS()}
   <defs>
     ${generateFilters()}
   </defs>
-  
+
   ${profilePicture}
-  
+
   <g class="bubble-container">
     ${generateBubbleBackground()}
     ${generateTitle()}
