@@ -104,6 +104,8 @@ export async function trackUsage(params: TrackingParams): Promise<void> {
 
   const isEmbed = isGitHubEmbed(referer, userAgent);
 
+  if (!isEmbed) return;
+
   Promise.all([
     logToSupabase({
       featureType,
