@@ -4,6 +4,7 @@ export interface Character {
   name: string;
   nameKo: string;
   catchphrase: string;
+  catchphraseEn: string;
   palette: string[];
 }
 
@@ -29,6 +30,24 @@ export const devQuotes = [
   "야근 중",
 ];
 
+export const devQuotesEn = [
+  "Fixing bugs",
+  "git push done",
+  "Code review",
+  "PR submitted",
+  "Tests passed",
+  "Need to refactor",
+  "Thinking commit msg",
+  "npm install...",
+  "console.log debug",
+  "Googling...",
+  "Build success",
+  "Type error fixed",
+  "API connected",
+  "Escaped CSS hell",
+  "Working late",
+];
+
 // 생활 관련 대사
 export const lifeQuotes = [
   "커피 한 잔",
@@ -46,6 +65,24 @@ export const lifeQuotes = [
   "영화 보고 싶다",
   "휴가 가고 싶어",
   "좋은 하루",
+];
+
+export const lifeQuotesEn = [
+  "Coffee time",
+  "What's for lunch",
+  "Nice weather",
+  "Wanna go home",
+  "Waiting for weekend",
+  "Need a nap",
+  "Should work out",
+  "So hungry",
+  "Snack time?",
+  "Listening to music",
+  "Take a walk?",
+  "Gotta read a book",
+  "Wanna watch movie",
+  "Need vacation",
+  "Good day",
 ];
 
 // 16x16 픽셀 스프라이트
@@ -1315,19 +1352,19 @@ const colorPalettes = {
 };
 
 // 스프라이트별 기본 특성
-const spriteTraits: Record<string, { nameKo: string; baseCatch: string }> = {
-  Devil: { nameKo: '데빌', baseCatch: '흥' },
-  Happy: { nameKo: '해피', baseCatch: '냥냥' },
-  Horned: { nameKo: '뿔이', baseCatch: '뿔' },
-  Glasses: { nameKo: '안경', baseCatch: '안경' },
-  Sleepy: { nameKo: '졸림', baseCatch: 'zzz' },
-  Poker: { nameKo: '무표정', baseCatch: '...' },
-  Ribbon: { nameKo: '리본', baseCatch: '예쁨' },
-  BigEyes: { nameKo: '큰눈', baseCatch: '뀨' },
-  Cool: { nameKo: '쿨', baseCatch: '쿨' },
-  Chubby: { nameKo: '뚱', baseCatch: '먹자' },
-  Angry: { nameKo: '화남', baseCatch: '흥칫' },
-  Baby: { nameKo: '아기', baseCatch: '냐앙' },
+const spriteTraits: Record<string, { nameKo: string; baseCatch: string; baseCatchEn: string }> = {
+  Devil: { nameKo: '데빌', baseCatch: '흥', baseCatchEn: 'hmph' },
+  Happy: { nameKo: '해피', baseCatch: '냥냥', baseCatchEn: 'meow' },
+  Horned: { nameKo: '뿔이', baseCatch: '뿔', baseCatchEn: 'horn' },
+  Glasses: { nameKo: '안경', baseCatch: '안경', baseCatchEn: 'nerd' },
+  Sleepy: { nameKo: '졸림', baseCatch: 'zzz', baseCatchEn: 'zzz' },
+  Poker: { nameKo: '무표정', baseCatch: '...', baseCatchEn: '...' },
+  Ribbon: { nameKo: '리본', baseCatch: '예쁨', baseCatchEn: 'cute' },
+  BigEyes: { nameKo: '큰눈', baseCatch: '뀨', baseCatchEn: 'uwu' },
+  Cool: { nameKo: '쿨', baseCatch: '쿨', baseCatchEn: 'cool' },
+  Chubby: { nameKo: '뚱', baseCatch: '먹자', baseCatchEn: 'yum' },
+  Angry: { nameKo: '화남', baseCatch: '흥칫', baseCatchEn: 'grr' },
+  Baby: { nameKo: '아기', baseCatch: '냐앙', baseCatchEn: 'nya' },
 };
 
 // 60개 캐릭터 생성
@@ -1344,6 +1381,7 @@ export const characters: Character[] = spriteNames.flatMap((spriteName, spriteIn
       name: `${spriteName}_${colorKey}`,
       nameKo: `${color.name}${trait.nameKo}`,
       catchphrase: `~${trait.baseCatch}`,
+      catchphraseEn: `~${trait.baseCatchEn}`,
       palette: color.palette,
     };
   })

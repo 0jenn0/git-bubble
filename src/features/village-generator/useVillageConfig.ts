@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocale } from '@/shared/i18n';
 
 type Theme = 'light' | 'dark';
 
@@ -10,10 +11,11 @@ export function useVillageConfig() {
   const [height, setHeight] = useState(200);
   const [theme, setTheme] = useState<Theme>('light');
   const [cacheKey, setCacheKey] = useState(0);
+  const { locale } = useLocale();
 
   useEffect(() => {
     setCacheKey(Date.now());
-  }, [username, width, height, theme]);
+  }, [username, width, height, theme, locale]);
 
   const hasRequiredValues = useMemo(() => {
     return username.trim().length > 0;
@@ -27,9 +29,10 @@ export function useVillageConfig() {
     params.set('width', width.toString());
     params.set('height', height.toString());
     params.set('theme', theme);
+    params.set('lang', locale);
 
     return `/api/village?${params.toString()}`;
-  }, [username, width, height, theme, hasRequiredValues]);
+  }, [username, width, height, theme, locale, hasRequiredValues]);
 
   const previewUrl = useMemo(() => {
     if (!hasRequiredValues) return '';
