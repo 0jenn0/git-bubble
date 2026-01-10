@@ -13,6 +13,15 @@ const getInitialValue = (key: string, defaultValue: string) => {
   return params.get(key) || defaultValue;
 };
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export function useBubbleConfig() {
   const [mode, setMode] = useState<Mode>(() => {
     const urlMode = getInitialValue('mode', 'tags');
@@ -52,7 +61,11 @@ export function useBubbleConfig() {
     return parseInt(urlFontSize) || 12;
   });
 
-  // URL 파라미터에서 mode에 따라 tags 또는 text 초기화
+  const debouncedTags = useDebounce(tags, 500);
+  const debouncedText = useDebounce(text, 500);
+  const debouncedTitle = useDebounce(title, 500);
+  const debouncedProfileUrl = useDebounce(profileUrl, 500);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
@@ -87,12 +100,22 @@ export function useBubbleConfig() {
 
   useEffect(() => {
     setCacheKey(Date.now());
-  }, [mode, tags, text, title, theme, direction, profileUrl, animation, width, fontSize]);
+  }, [mode, debouncedTags, debouncedText, debouncedTitle, theme, direction, debouncedProfileUrl, animation, width, fontSize]);
 
   const previewUrl = useMemo(() => {
-    const url = generateUrl();
+    const params = new URLSearchParams();
+    params.set('tags', mode === 'tags' ? debouncedTags : debouncedText);
+    params.set('mode', mode);
+    if (debouncedTitle) params.set('title', debouncedTitle);
+    params.set('theme', theme);
+    params.set('direction', direction);
+    if (debouncedProfileUrl) params.set('profileUrl', debouncedProfileUrl);
+    if (animation !== 'none') params.set('animation', animation);
+    params.set('width', width.toString());
+    params.set('fontSize', fontSize.toString());
+    const url = `/api/bubble?${params.toString()}`;
     return cacheKey ? `${url}&_t=${cacheKey}` : url;
-  }, [generateUrl, cacheKey]);
+  }, [mode, debouncedTags, debouncedText, debouncedTitle, theme, direction, debouncedProfileUrl, animation, width, fontSize, cacheKey]);
 
   const hasRequiredValues = mode === 'tags' ? tags.trim().length > 0 : text.trim().length > 0;
   const missingField = mode === 'tags' ? 'Tags' : 'Text';

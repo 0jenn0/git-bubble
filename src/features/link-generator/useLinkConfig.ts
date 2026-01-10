@@ -4,6 +4,15 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 
 type Theme = 'light' | 'dark';
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export function useLinkConfig() {
   const [url, setUrl] = useState('');
   const [theme, setTheme] = useState<Theme>('light');
@@ -15,9 +24,14 @@ export function useLinkConfig() {
   const [badgeColor, setBadgeColor] = useState('#FF0000');
   const [cacheKey, setCacheKey] = useState(0);
 
+  const debouncedUrl = useDebounce(url, 500);
+  const debouncedThumbnail = useDebounce(customThumbnail, 500);
+  const debouncedBadgeText = useDebounce(badgeText, 500);
+  const debouncedBadgeImage = useDebounce(badgeImage, 500);
+
   useEffect(() => {
     setCacheKey(Date.now());
-  }, [url, theme, width, customThumbnail, badgeEnabled, badgeText, badgeImage, badgeColor]);
+  }, [debouncedUrl, theme, width, debouncedThumbnail, badgeEnabled, debouncedBadgeText, debouncedBadgeImage, badgeColor]);
 
   const generateUrl = useCallback(() => {
     if (!url) return '';
@@ -40,10 +54,23 @@ export function useLinkConfig() {
   }, [url, theme, width, customThumbnail, badgeEnabled, badgeText, badgeImage, badgeColor]);
 
   const previewUrl = useMemo(() => {
-    const generatedUrl = generateUrl();
-    if (!generatedUrl) return '';
+    if (!debouncedUrl) return '';
+    const params = new URLSearchParams();
+    params.set('url', debouncedUrl);
+    params.set('theme', theme);
+    params.set('width', width.toString());
+    if (debouncedThumbnail) {
+      params.set('thumbnail', debouncedThumbnail);
+    }
+    if (badgeEnabled) {
+      params.set('badge', 'true');
+      if (debouncedBadgeText) params.set('badgeText', debouncedBadgeText);
+      if (debouncedBadgeImage) params.set('badgeImage', debouncedBadgeImage);
+      if (badgeColor) params.set('badgeColor', badgeColor);
+    }
+    const generatedUrl = `/api/link?${params.toString()}`;
     return cacheKey ? `${generatedUrl}&_t=${cacheKey}` : generatedUrl;
-  }, [generateUrl, cacheKey]);
+  }, [debouncedUrl, theme, width, debouncedThumbnail, badgeEnabled, debouncedBadgeText, debouncedBadgeImage, badgeColor, cacheKey]);
 
   const hasRequiredValues = url.trim().length > 0;
 
