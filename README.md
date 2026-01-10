@@ -38,7 +38,7 @@
 
 ### Village
 
-<img src="https://git-bubble.vercel.app/api/village?username=octocat&theme=light&width=500&height=200" alt="Village Example" />
+<img src="https://git-bubble.vercel.app/api/village?username=0jenn0&theme=light&width=500&height=200" alt="Village Example" />
 
 Commit-based pixel village with animated characters. More commits = more villagers (1 character per 100 commits, max 12).
 
