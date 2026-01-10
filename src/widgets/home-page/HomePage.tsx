@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useBubbleConfig } from '@/features/bubble-generator';
 import { useLinkConfig } from '@/features/link-generator';
 import { useDividerConfig } from '@/features/divider-generator';
@@ -19,9 +20,26 @@ import { useLocale } from '@/shared/i18n';
 
 type GeneratorTab = 'bubble' | 'link' | 'divider' | 'village';
 
+const VALID_TABS: GeneratorTab[] = ['bubble', 'link', 'divider', 'village'];
+
 export function HomePage() {
-  const [activeTab, setActiveTab] = useState<GeneratorTab>('bubble');
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const { t } = useLocale();
+
+  const tabParam = searchParams.get('tab');
+  const activeTab: GeneratorTab = VALID_TABS.includes(tabParam as GeneratorTab)
+    ? (tabParam as GeneratorTab)
+    : 'bubble';
+
+  const setActiveTab = useCallback(
+    (tab: GeneratorTab) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', tab);
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router]
+  );
 
   const bubbleConfig = useBubbleConfig();
   const linkConfig = useLinkConfig();
