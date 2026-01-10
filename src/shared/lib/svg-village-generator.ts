@@ -4,6 +4,8 @@ import {
   seededRandom,
   devQuotes,
   lifeQuotes,
+  devQuotesEn,
+  lifeQuotesEn,
 } from './village-characters';
 
 export interface RepoData {
@@ -19,6 +21,7 @@ export interface VillageConfig {
   characters: Character[];
   username: string;
   totalCommits: number;
+  lang?: 'ko' | 'en';
 }
 
 // 캐릭터 크기 (더 크게)
@@ -48,8 +51,9 @@ const PALETTE = {
 };
 
 // 인덱스로 대사 가져오기
-function getQuoteByIndex(index: number): string {
-  const allQuotes = [...devQuotes, ...lifeQuotes];
+function getQuoteByIndex(index: number, lang: 'ko' | 'en' = 'ko'): string {
+  const allQuotes =
+    lang === 'en' ? [...devQuotesEn, ...lifeQuotesEn] : [...devQuotes, ...lifeQuotes];
   return allQuotes[index % allQuotes.length];
 }
 
@@ -59,7 +63,8 @@ function generateFreeRoamingCharacters(
   width: number,
   height: number,
   theme: 'light' | 'dark',
-  username: string
+  username: string,
+  lang: 'ko' | 'en' = 'ko'
 ): string {
   const random = seededRandom(username + '_chars');
   const palette = PALETTE[theme];
@@ -74,7 +79,8 @@ function generateFreeRoamingCharacters(
 
     const direction = random() > 0.5 ? 'right' : 'left';
     const quoteIndex = Math.floor(random() * (devQuotes.length + lifeQuotes.length));
-    const quote = getQuoteByIndex(quoteIndex) + char.catchphrase;
+    const catchphrase = lang === 'en' ? char.catchphraseEn : char.catchphrase;
+    const quote = getQuoteByIndex(quoteIndex, lang) + catchphrase;
 
     // 애니메이션 타이밍
     const moveRange = 10 + random() * 20;
@@ -82,11 +88,13 @@ function generateFreeRoamingCharacters(
     const speechDelay = random() * 10;
     const speechCycle = 15 + random() * 8;
 
-    // 말풍선
-    const bubbleWidth = Math.min(quote.length * 5 + 12, 80);
-    const bubbleHeight = 16;
+    // 말풍선 (더 넓게)
+    const maxChars = 18;
+    const displayQuote = quote.length > maxChars ? quote.slice(0, maxChars - 1) + '…' : quote;
+    const bubbleWidth = Math.min(displayQuote.length * 6 + 16, 130);
+    const bubbleHeight = 18;
     const bubbleX = CHAR_WIDTH / 2 - bubbleWidth / 2;
-    const bubbleY = -bubbleHeight - 6;
+    const bubbleY = -bubbleHeight - 8;
 
     characterElements += `
       <g id="char-${index}">
@@ -108,10 +116,10 @@ function generateFreeRoamingCharacters(
             dur="${speechCycle}s"
             repeatCount="indefinite"
           />
-          <rect x="${bubbleX}" y="${bubbleY}" width="${bubbleWidth}" height="${bubbleHeight}" rx="3" fill="${palette.textLight}" stroke="${palette.border}" stroke-width="1"/>
-          <polygon points="${CHAR_WIDTH / 2 - 3},${bubbleY + bubbleHeight} ${CHAR_WIDTH / 2},${bubbleY + bubbleHeight + 4} ${CHAR_WIDTH / 2 + 3},${bubbleY + bubbleHeight}" fill="${palette.textLight}" stroke="${palette.border}" stroke-width="1"/>
-          <rect x="${CHAR_WIDTH / 2 - 2}" y="${bubbleY + bubbleHeight - 1}" width="4" height="2" fill="${palette.textLight}"/>
-          <text x="${bubbleX + bubbleWidth / 2}" y="${bubbleY + bubbleHeight / 2 + 3}" text-anchor="middle" fill="${palette.text}" font-size="7" font-family="monospace">${quote.slice(0, 11)}${quote.length > 11 ? '…' : ''}</text>
+          <rect x="${bubbleX}" y="${bubbleY}" width="${bubbleWidth}" height="${bubbleHeight}" rx="4" fill="${palette.textLight}" stroke="${palette.border}" stroke-width="1"/>
+          <polygon points="${CHAR_WIDTH / 2 - 4},${bubbleY + bubbleHeight} ${CHAR_WIDTH / 2},${bubbleY + bubbleHeight + 5} ${CHAR_WIDTH / 2 + 4},${bubbleY + bubbleHeight}" fill="${palette.textLight}" stroke="${palette.border}" stroke-width="1"/>
+          <rect x="${CHAR_WIDTH / 2 - 3}" y="${bubbleY + bubbleHeight - 1}" width="6" height="2" fill="${palette.textLight}"/>
+          <text x="${bubbleX + bubbleWidth / 2}" y="${bubbleY + bubbleHeight / 2 + 4}" text-anchor="middle" fill="${palette.text}" font-size="8" font-family="monospace">${displayQuote}</text>
         </g>
       </g>
     `;
@@ -143,7 +151,7 @@ function generateMonochromeBackground(width: number, height: number, theme: 'lig
 
 // SVG 생성
 export function generateVillageSVG(config: VillageConfig): string {
-  const { width, height, theme, characters, username, totalCommits } = config;
+  const { width, height, theme, characters, username, totalCommits, lang = 'ko' } = config;
   const random = seededRandom(username + '_village');
   const palette = PALETTE[theme];
 
@@ -156,7 +164,8 @@ export function generateVillageSVG(config: VillageConfig): string {
     width,
     height,
     theme,
-    username
+    username,
+    lang
   );
 
   // 타이틀

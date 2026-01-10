@@ -162,6 +162,7 @@ export async function GET(request: NextRequest) {
     const width = parseInt(searchParams.get('width') || '600', 10);
     const height = parseInt(searchParams.get('height') || '200', 10);
     const theme = (searchParams.get('theme') || 'light') as 'light' | 'dark';
+    const lang = (searchParams.get('lang') || 'ko') as 'ko' | 'en';
 
     // 필수 파라미터 검증
     if (!username) {
@@ -193,6 +194,7 @@ export async function GET(request: NextRequest) {
       characters: selectedCharacters,
       username,
       totalCommits,
+      lang,
     });
 
     // 응답
