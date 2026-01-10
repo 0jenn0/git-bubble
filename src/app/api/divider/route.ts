@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateDividerSVG } from '@/shared/lib/svg-divider-generator';
+import { trackUsage } from '@/shared/lib/usage-tracker';
 
 export async function GET(request: NextRequest) {
+  trackUsage({ featureType: 'divider', request });
   try {
     const { searchParams } = new URL(request.url);
 

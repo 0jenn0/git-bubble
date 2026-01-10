@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/shared/lib/supabase';
 import { selectCharactersForUser } from '@/shared/lib/village-characters';
 import { generateVillageSVG, RepoData } from '@/shared/lib/svg-village-generator';
+import { trackUsage } from '@/shared/lib/usage-tracker';
 
 interface RepoNode {
   name: string;
@@ -154,11 +155,12 @@ async function saveVillageData(
 }
 
 export async function GET(request: NextRequest) {
+  const username = new URL(request.url).searchParams.get('username');
+  trackUsage({ featureType: 'village', username: username || undefined, request });
+
   try {
     const { searchParams } = new URL(request.url);
 
-    // 파라미터 파싱
-    const username = searchParams.get('username');
     const width = parseInt(searchParams.get('width') || '600', 10);
     const height = parseInt(searchParams.get('height') || '200', 10);
     const theme = (searchParams.get('theme') || 'light') as 'light' | 'dark';

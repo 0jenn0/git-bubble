@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateBubbleSVG } from '@/shared/lib/svg-generator';
 import { parseParams } from '@/shared/lib/util';
+import { trackUsage } from '@/shared/lib/usage-tracker';
 
 export async function GET(request: NextRequest) {
+ trackUsage({ featureType: 'bubble', request });
  try {
  // URL 파라미터 파싱
  const { searchParams } = new URL(request.url);

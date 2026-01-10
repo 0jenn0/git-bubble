@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseParams } from '@/shared/lib/util';
 import { generateLinkPreviewSVG } from '@/shared/lib/svg-link-generator';
+import { trackUsage } from '@/shared/lib/usage-tracker';
 
 export async function GET(request: NextRequest) {
+ trackUsage({ featureType: 'link', request });
  try {
  // URL 파라미터 파싱
  const { searchParams } = new URL(request.url);
