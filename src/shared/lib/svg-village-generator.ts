@@ -6,6 +6,7 @@ import {
   lifeQuotes,
   devQuotesEn,
   lifeQuotesEn,
+  CharacterAction,
 } from './village-characters';
 
 export interface RepoData {
@@ -57,6 +58,97 @@ function getQuoteByIndex(index: number, lang: 'ko' | 'en' = 'ko'): string {
   return allQuotes[index % allQuotes.length];
 }
 
+// 액션별 애니메이션 생성
+function getActionAnimation(
+  action: CharacterAction,
+  cx: number,
+  cy: number,
+  width: number,
+  height: number,
+  random: () => number,
+  index: number
+): { animation: string; extraEffects: string } {
+  const padding = 30;
+  const maxX = width - padding - CHAR_WIDTH;
+  const maxY = height - padding - CHAR_HEIGHT;
+
+  switch (action) {
+    case 'walk': {
+      const moveRangeX = 60 + random() * 100;
+      const moveRangeY = 20 + random() * 30;
+      const dur = 8 + random() * 6;
+      const targetX = Math.min(Math.max(cx + (random() > 0.5 ? moveRangeX : -moveRangeX), padding), maxX);
+      const targetY = Math.min(Math.max(cy + (random() > 0.5 ? moveRangeY : -moveRangeY), padding), maxY);
+      return {
+        animation: `
+          <animateTransform attributeName="transform" type="translate"
+            values="${cx},${cy}; ${targetX},${targetY}; ${cx},${cy}"
+            dur="${dur}s" repeatCount="indefinite"/>`,
+        extraEffects: ''
+      };
+    }
+    case 'sleep': {
+      const bobDur = 3 + random() * 2;
+      return {
+        animation: `
+          <animateTransform attributeName="transform" type="translate"
+            values="${cx},${cy}; ${cx},${cy + 2}; ${cx},${cy}"
+            dur="${bobDur}s" repeatCount="indefinite"/>`,
+        extraEffects: `
+          <g>
+            <text x="${CHAR_WIDTH + 5}" y="-5" font-size="10" fill="#666" font-family="monospace">
+              <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/>
+              z
+            </text>
+            <text x="${CHAR_WIDTH + 12}" y="-12" font-size="12" fill="#666" font-family="monospace">
+              <animate attributeName="opacity" values="0;1;0" dur="2s" begin="0.3s" repeatCount="indefinite"/>
+              z
+            </text>
+            <text x="${CHAR_WIDTH + 20}" y="-20" font-size="14" fill="#666" font-family="monospace">
+              <animate attributeName="opacity" values="0;1;0" dur="2s" begin="0.6s" repeatCount="indefinite"/>
+              Z
+            </text>
+          </g>`
+      };
+    }
+    case 'sit': {
+      const swayDur = 4 + random() * 2;
+      return {
+        animation: `
+          <animateTransform attributeName="transform" type="translate"
+            values="${cx},${cy}; ${cx + 3},${cy}; ${cx},${cy}; ${cx - 3},${cy}; ${cx},${cy}"
+            dur="${swayDur}s" repeatCount="indefinite"/>`,
+        extraEffects: ''
+      };
+    }
+    case 'jump': {
+      const jumpDur = 1.5 + random() * 0.5;
+      const jumpHeight = 15 + random() * 10;
+      return {
+        animation: `
+          <animateTransform attributeName="transform" type="translate"
+            values="${cx},${cy}; ${cx},${cy - jumpHeight}; ${cx},${cy}"
+            dur="${jumpDur}s" repeatCount="indefinite" calcMode="spline"
+            keySplines="0.5 0 0.5 1; 0.5 0 0.5 1"/>`,
+        extraEffects: ''
+      };
+    }
+    case 'idle':
+    default: {
+      const moveRange = 15 + random() * 25;
+      const dur = 6 + random() * 4;
+      const targetX = Math.min(Math.max(cx + (random() > 0.5 ? moveRange : -moveRange), padding), maxX);
+      return {
+        animation: `
+          <animateTransform attributeName="transform" type="translate"
+            values="${cx},${cy}; ${targetX},${cy}; ${cx},${cy}"
+            dur="${dur}s" repeatCount="indefinite"/>`,
+        extraEffects: ''
+      };
+    }
+  }
+}
+
 // 캐릭터들 자유롭게 배치
 function generateFreeRoamingCharacters(
   characters: Character[],
@@ -68,27 +160,28 @@ function generateFreeRoamingCharacters(
 ): string {
   const random = seededRandom(username + '_chars');
   const palette = PALETTE[theme];
+  const actions: CharacterAction[] = ['idle', 'walk', 'sleep', 'sit', 'jump'];
 
   let characterElements = '';
 
   characters.forEach((char, index) => {
-    // 전체 화면에서 랜덤 위치
-    const padding = 50;
+    const padding = 30;
     const cx = padding + random() * (width - padding * 2 - CHAR_WIDTH);
     const cy = padding + random() * (height - padding * 2 - CHAR_HEIGHT);
 
+    const actionIndex = Math.floor(random() * actions.length);
+    const action = actions[actionIndex];
     const direction = random() > 0.5 ? 'right' : 'left';
+
     const quoteIndex = Math.floor(random() * (devQuotes.length + lifeQuotes.length));
     const catchphrase = lang === 'en' ? char.catchphraseEn : char.catchphrase;
     const quote = getQuoteByIndex(quoteIndex, lang) + catchphrase;
 
-    // 애니메이션 타이밍
-    const moveRange = 10 + random() * 20;
-    const moveDur = 5 + random() * 4;
+    const { animation, extraEffects } = getActionAnimation(action, cx, cy, width, height, random, index);
+
     const speechDelay = random() * 10;
     const speechCycle = 15 + random() * 8;
 
-    // 말풍선 (더 넓게)
     const maxChars = 18;
     const displayQuote = quote.length > maxChars ? quote.slice(0, maxChars - 1) + '…' : quote;
     const bubbleWidth = Math.min(displayQuote.length * 6 + 16, 130);
@@ -98,16 +191,11 @@ function generateFreeRoamingCharacters(
 
     characterElements += `
       <g id="char-${index}">
-        <animateTransform
-          attributeName="transform"
-          type="translate"
-          values="${cx},${cy}; ${cx + (direction === 'right' ? moveRange : -moveRange)},${cy}; ${cx},${cy}"
-          dur="${moveDur}s"
-          repeatCount="indefinite"
-        />
+        ${animation}
         <g transform="${direction === 'left' ? `scale(-1,1) translate(${-CHAR_WIDTH},0)` : ''}">
-          ${generateCharacterSVG(char, CHAR_SCALE)}
+          ${generateCharacterSVG(char, CHAR_SCALE, action)}
         </g>
+        ${extraEffects}
         <g opacity="0">
           <animate
             attributeName="opacity"
